@@ -16,6 +16,13 @@ from .config import DB_PATH
 _lock = threading.Lock()
 _conn: duckdb.DuckDBPyConnection | None = None
 
+# Columns added after the first deployment. Applied on connect so existing database files keep working.
+MIGRATIONS = [
+    ("llm_runs", "cache_read_tokens", "INTEGER"),
+    ("llm_runs", "cache_write_tokens", "INTEGER"),
+    ("llm_runs", "effort", "VARCHAR"),
+]
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bid_events (
     id VARCHAR PRIMARY KEY, name VARCHAR, item VARCHAR, quantity INTEGER, currency VARCHAR,
@@ -34,7 +41,8 @@ CREATE TABLE IF NOT EXISTS field_edits (
 CREATE TABLE IF NOT EXISTS llm_runs (
     id VARCHAR PRIMARY KEY, ts TIMESTAMP, event_id VARCHAR, quote_id VARCHAR, purpose VARCHAR,
     source VARCHAR, model VARCHAR, prompt_version VARCHAR, input_tokens INTEGER, output_tokens INTEGER,
-    cost_usd DOUBLE, latency_s DOUBLE, status VARCHAR, error VARCHAR, request_id VARCHAR
+    cost_usd DOUBLE, latency_s DOUBLE, status VARCHAR, error VARCHAR, request_id VARCHAR,
+    cache_read_tokens INTEGER, cache_write_tokens INTEGER, effort VARCHAR
 );
 CREATE TABLE IF NOT EXISTS awards (
     event_id VARCHAR PRIMARY KEY, quote_id VARCHAR, supplier VARCHAR, landed_total_usd DOUBLE,
@@ -70,7 +78,13 @@ def cursor() -> duckdb.DuckDBPyConnection:
             DB_PATH.parent.mkdir(parents=True, exist_ok=True)
             _conn = duckdb.connect(str(DB_PATH))
             _conn.execute(SCHEMA)
+            _migrate(_conn)
         return _conn.cursor()
+
+
+def _migrate(conn: duckdb.DuckDBPyConnection) -> None:
+    for table, column, col_type in MIGRATIONS:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}")
 
 
 def _rows(sql: str, params=None) -> list[dict]:
@@ -192,11 +206,15 @@ def delete_event(event_id: str, actor: str) -> None:
 # --- LLM runs ------------------------------------------------------------------
 def log_llm_run(meta: dict, purpose: str, event_id=None, quote_id=None) -> None:
     cursor().execute(
-        "INSERT INTO llm_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO llm_runs (id, ts, event_id, quote_id, purpose, source, model, prompt_version, "
+        "input_tokens, output_tokens, cost_usd, latency_s, status, error, request_id, "
+        "cache_read_tokens, cache_write_tokens, effort) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [_new_id(), _now(), event_id, quote_id, purpose, meta.get("source"), meta.get("model"),
          meta.get("prompt_version"), meta.get("input_tokens", 0), meta.get("output_tokens", 0),
          meta.get("cost_usd", 0.0), meta.get("latency_s", 0.0), meta.get("status"),
-         meta.get("error"), meta.get("request_id")],
+         meta.get("error"), meta.get("request_id"),
+         meta.get("cache_read_tokens", 0) or 0, meta.get("cache_write_tokens", 0) or 0, meta.get("effort")],
     )
 
 

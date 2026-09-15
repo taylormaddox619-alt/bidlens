@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Unit tests (no API calls)
+        run: python -m pytest -q
+      - name: Pipeline + rules regression on recorded extractions (no API calls)
+        run: python evals/run_evals.py --demo
+      - name: Regression gate
+        # The recorded extractions are real Claude output. If the rules or normalization regress,
+        # exception recall or verified citations drop below 100% and the build fails.
+        run: |
+          python - <<'EOF'
+          import json, sys
+          r = json.load(open("evals/results_demo.json", encoding="utf-8"))
+          checks = {"flag_recall": 1.0, "citation_rate": 1.0, "field_accuracy": 0.95}
+          bad = {k: r[k] for k, floor in checks.items() if r[k] < floor}
+          print({k: round(r[k], 4) for k in checks})
+          if bad:
+              sys.exit(f"Regression gate failed: {bad}")
+          EOF
