@@ -1,0 +1,102 @@
+{
+  "filename": "Q2_Kessler_Vogt.pdf",
+  "quote": {
+    "supplier_name": {
+      "value": "Kessler & Vogt Gusstechnik GmbH",
+      "source_quote": "Kessler & Vogt Gusstechnik GmbH",
+      "confidence": "high"
+    },
+    "quote_number": {
+      "value": "KV-2026-4471",
+      "source_quote": "Angebots-Nr. / Quote No.: KV-2026-4471",
+      "confidence": "high"
+    },
+    "quote_date": {
+      "value": "2026-08-27",
+      "source_quote": "Datum / Date: 2026-08-27",
+      "confidence": "high"
+    },
+    "valid_until": {
+      "value": "2026-12-15",
+      "source_quote": "G\u00fcltig bis / Valid until: 15.12.2026",
+      "confidence": "high"
+    },
+    "currency": {
+      "value": "EUR",
+      "source_quote": "W\u00e4hrung / Currency: EUR",
+      "confidence": "high"
+    },
+    "unit_price": {
+      "value": 168.0,
+      "source_quote": "Einzelpreis / Unit price: EUR 168,00 pro St\u00fcck / per piece",
+      "confidence": "high"
+    },
+    "price_tiers": [],
+    "tooling_cost": {
+      "value": 2500.0,
+      "source_quote": "Modellkosten / Pattern cost: EUR 2.500,00 einmalig / one-time",
+      "confidence": "high"
+    },
+    "freight_cost": {
+      "value": null,
+      "source_quote": null,
+      "confidence": "high"
+    },
+    "incoterm": {
+      "value": "EXW",
+      "source_quote": "Lieferbedingungen / Delivery terms: EXW Stuttgart (Incoterms 2020)",
+      "confidence": "high"
+    },
+    "incoterm_location": {
+      "value": "Stuttgart",
+      "source_quote": "Lieferbedingungen / Delivery terms: EXW Stuttgart (Incoterms 2020)",
+      "confidence": "high"
+    },
+    "country_of_origin": {
+      "value": "DE",
+      "source_quote": "Ursprungsland / Country of origin: Deutschland (Germany)",
+      "confidence": "high"
+    },
+    "lead_time_weeks": {
+      "value": 11.0,
+      "source_quote": "Lieferzeit / Lead time: 11 Wochen / weeks",
+      "confidence": "high"
+    },
+    "payment_terms": {
+      "value": "30% deposit with order, balance net 30 days",
+      "source_quote": "(30% deposit with order, balance net 30 days)",
+      "confidence": "high"
+    },
+    "payment_terms_days": {
+      "value": 30.0,
+      "source_quote": "(30% deposit with order, balance net 30 days)",
+      "confidence": "high"
+    },
+    "prepayment_percent": {
+      "value": 30.0,
+      "source_quote": "(30% deposit with order, balance net 30 days)",
+      "confidence": "high"
+    },
+    "warranty_months": {
+      "value": 24.0,
+      "source_quote": "Gew\u00e4hrleistung / Warranty: 24 Monate / months",
+      "confidence": "high"
+    },
+    "moq": {
+      "value": 100.0,
+      "source_quote": "Mindestbestellmenge / MOQ: 100 St\u00fcck / pcs",
+      "confidence": "high"
+    },
+    "supplier_exceptions": [
+      "Prices subject to alloy surcharge."
+    ]
+  },
+  "expected_flags": [
+    "CURRENCY_MISMATCH",
+    "FREIGHT_ESTIMATED",
+    "PAYMENT_TERMS_BELOW_STANDARD",
+    "PREPAYMENT_REQUIRED",
+    "TARIFF_EXPOSURE",
+    "SUPPLIER_EXCEPTIONS"
+  ]
+}

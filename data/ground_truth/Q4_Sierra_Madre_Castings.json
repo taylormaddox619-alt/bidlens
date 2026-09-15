@@ -1,0 +1,115 @@
+{
+  "filename": "Q4_Sierra_Madre_Castings.xlsx",
+  "quote": {
+    "supplier_name": {
+      "value": "Sierra Madre Castings S.A. de C.V.",
+      "source_quote": "Sierra Madre Castings S.A. de C.V.",
+      "confidence": "high"
+    },
+    "quote_number": {
+      "value": "SMC-2026-311",
+      "source_quote": "Quotation | SMC-2026-311",
+      "confidence": "high"
+    },
+    "quote_date": {
+      "value": "2026-08-30",
+      "source_quote": "Date | 2026-08-30",
+      "confidence": "high"
+    },
+    "valid_until": {
+      "value": "2026-10-31",
+      "source_quote": "Valid Until | 2026-10-31",
+      "confidence": "high"
+    },
+    "currency": {
+      "value": "USD",
+      "source_quote": "Currency | USD",
+      "confidence": "high"
+    },
+    "unit_price": {
+      "value": 194.0,
+      "source_quote": "500 | 194",
+      "confidence": "high"
+    },
+    "price_tiers": [
+      {
+        "min_qty": 1,
+        "max_qty": 249,
+        "unit_price": 205.0,
+        "source_quote": "1 | 249 | 205"
+      },
+      {
+        "min_qty": 250,
+        "max_qty": 499,
+        "unit_price": 199.0,
+        "source_quote": "250 | 499 | 199"
+      },
+      {
+        "min_qty": 500,
+        "max_qty": null,
+        "unit_price": 194.0,
+        "source_quote": "500 | 194"
+      }
+    ],
+    "tooling_cost": {
+      "value": 3000.0,
+      "source_quote": "Pattern / Tooling (one-time) | 3000",
+      "confidence": "high"
+    },
+    "freight_cost": {
+      "value": 3250.0,
+      "source_quote": "Freight to Charlotte, NC (total) | 3250",
+      "confidence": "high"
+    },
+    "incoterm": {
+      "value": "FCA",
+      "source_quote": "Incoterm | FCA Monterrey",
+      "confidence": "high"
+    },
+    "incoterm_location": {
+      "value": "Monterrey",
+      "source_quote": "Incoterm | FCA Monterrey",
+      "confidence": "high"
+    },
+    "country_of_origin": {
+      "value": "MX",
+      "source_quote": "Country of Origin | Mexico (USMCA qualifying)",
+      "confidence": "high"
+    },
+    "lead_time_weeks": {
+      "value": 8.0,
+      "source_quote": "Lead Time | 8 weeks",
+      "confidence": "high"
+    },
+    "payment_terms": {
+      "value": "Net 45",
+      "source_quote": "Payment Terms | Net 45",
+      "confidence": "high"
+    },
+    "payment_terms_days": {
+      "value": 45.0,
+      "source_quote": "Payment Terms | Net 45",
+      "confidence": "high"
+    },
+    "prepayment_percent": {
+      "value": 0.0,
+      "source_quote": "Payment Terms | Net 45",
+      "confidence": "high"
+    },
+    "warranty_months": {
+      "value": null,
+      "source_quote": null,
+      "confidence": "high"
+    },
+    "moq": {
+      "value": 250.0,
+      "source_quote": "Minimum Order Qty | 250",
+      "confidence": "high"
+    },
+    "supplier_exceptions": []
+  },
+  "expected_flags": [
+    "MISSING_FIELD",
+    "PAYMENT_TERMS_BELOW_STANDARD"
+  ]
+}

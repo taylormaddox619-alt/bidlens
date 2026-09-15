@@ -1,0 +1,106 @@
+{
+  "filename": "Q1_Jadeport_Foundry.pdf",
+  "quote": {
+    "supplier_name": {
+      "value": "Jadeport Foundry Co., Ltd.",
+      "source_quote": "JADEPORT FOUNDRY CO., LTD.",
+      "confidence": "high"
+    },
+    "quote_number": {
+      "value": "JPF-Q-26-0917",
+      "source_quote": "Quotation No.: JPF-Q-26-0917",
+      "confidence": "high"
+    },
+    "quote_date": {
+      "value": "2026-08-24",
+      "source_quote": "Date: 2026-08-24",
+      "confidence": "high"
+    },
+    "valid_until": {
+      "value": "2026-11-30",
+      "source_quote": "Valid Until: 2026-11-30",
+      "confidence": "high"
+    },
+    "currency": {
+      "value": "USD",
+      "source_quote": "Currency: USD",
+      "confidence": "high"
+    },
+    "unit_price": {
+      "value": 172.0,
+      "source_quote": "Unit Price: USD 172.00 per piece",
+      "confidence": "high"
+    },
+    "price_tiers": [],
+    "tooling_cost": {
+      "value": 6000.0,
+      "source_quote": "Pattern and tooling charge: USD 6,000.00 one-time",
+      "confidence": "high"
+    },
+    "freight_cost": {
+      "value": null,
+      "source_quote": null,
+      "confidence": "high"
+    },
+    "incoterm": {
+      "value": "FOB",
+      "source_quote": "Incoterms: FOB Ningbo (Incoterms 2020)",
+      "confidence": "high"
+    },
+    "incoterm_location": {
+      "value": "Ningbo",
+      "source_quote": "Incoterms: FOB Ningbo (Incoterms 2020)",
+      "confidence": "high"
+    },
+    "country_of_origin": {
+      "value": "CN",
+      "source_quote": "Country of Origin: China",
+      "confidence": "high"
+    },
+    "lead_time_weeks": {
+      "value": 10.0,
+      "source_quote": "Lead Time: 10 weeks after receipt of PO and approved first article",
+      "confidence": "high"
+    },
+    "payment_terms": {
+      "value": "Net 60 days from invoice date",
+      "source_quote": "Payment Terms: Net 60 days from invoice date",
+      "confidence": "high"
+    },
+    "payment_terms_days": {
+      "value": 60.0,
+      "source_quote": "Payment Terms: Net 60 days from invoice date",
+      "confidence": "high"
+    },
+    "prepayment_percent": {
+      "value": 0.0,
+      "source_quote": "Payment Terms: Net 60 days from invoice date",
+      "confidence": "high"
+    },
+    "warranty_months": {
+      "value": 12.0,
+      "source_quote": "Warranty: 12 months from date of shipment",
+      "confidence": "high"
+    },
+    "moq": {
+      "value": 300.0,
+      "source_quote": "Minimum Order Quantity: 300 pcs",
+      "confidence": "high"
+    },
+    "supplier_exceptions": [
+      "Price subject to adjustment if pig iron price changes more than 8%.",
+      "Ocean freight to be arranged by buyer.",
+      "Document contains instructions addressed to automated reviewers"
+    ]
+  },
+  "meta": {
+    "source": "fixture",
+    "model": "hand-labeled fixture",
+    "prompt_version": null,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0.0,
+    "latency_s": 0.0,
+    "status": "ok"
+  }
+}

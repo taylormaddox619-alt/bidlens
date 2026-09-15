@@ -1,0 +1,10 @@
+{
+  "event_name": "RFQ-2026-0142 Air-end housing",
+  "item": "Air-end housing, cast iron EN-GJL-250, machined to drawing AEH-4471 Rev C",
+  "quantity": 500,
+  "currency": "USD",
+  "required_lead_time_weeks": 12,
+  "standard_payment_days": 60,
+  "destination": "Charlotte, NC distribution center",
+  "evaluation_date": "2026-09-15"
+}

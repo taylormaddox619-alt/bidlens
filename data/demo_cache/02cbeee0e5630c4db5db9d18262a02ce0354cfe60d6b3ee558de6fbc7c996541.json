@@ -1,0 +1,104 @@
+{
+  "filename": "Q3_Lakeshore_Cast.pdf",
+  "quote": {
+    "supplier_name": {
+      "value": "Lakeshore Cast Components, Inc.",
+      "source_quote": "LAKESHORE CAST COMPONENTS, INC.",
+      "confidence": "high"
+    },
+    "quote_number": {
+      "value": "LCC-58213",
+      "source_quote": "Quote #: LCC-58213",
+      "confidence": "high"
+    },
+    "quote_date": {
+      "value": "2026-07-15",
+      "source_quote": "Quote Date: 2026-07-15",
+      "confidence": "high"
+    },
+    "valid_until": {
+      "value": "2026-08-31",
+      "source_quote": "This quotation is valid through August 31, 2026.",
+      "confidence": "high"
+    },
+    "currency": {
+      "value": "USD",
+      "source_quote": "Unit Price: $214.00 each",
+      "confidence": "high"
+    },
+    "unit_price": {
+      "value": 214.0,
+      "source_quote": "Unit Price: $214.00 each",
+      "confidence": "high"
+    },
+    "price_tiers": [],
+    "tooling_cost": {
+      "value": 0.0,
+      "source_quote": "Tooling: Existing pattern on file - no charge",
+      "confidence": "high"
+    },
+    "freight_cost": {
+      "value": null,
+      "source_quote": null,
+      "confidence": "high"
+    },
+    "incoterm": {
+      "value": "DAP",
+      "source_quote": "Shipping: Delivered DAP Charlotte, NC - freight included in price",
+      "confidence": "high"
+    },
+    "incoterm_location": {
+      "value": "Charlotte, NC",
+      "source_quote": "Shipping: Delivered DAP Charlotte, NC - freight included in price",
+      "confidence": "high"
+    },
+    "country_of_origin": {
+      "value": "US",
+      "source_quote": "Origin: Made in USA",
+      "confidence": "high"
+    },
+    "lead_time_weeks": {
+      "value": 16.0,
+      "source_quote": "Lead Time: 16 weeks ARO",
+      "confidence": "high"
+    },
+    "payment_terms": {
+      "value": "Net 60",
+      "source_quote": "Terms: Net 60",
+      "confidence": "high"
+    },
+    "payment_terms_days": {
+      "value": 60.0,
+      "source_quote": "Terms: Net 60",
+      "confidence": "high"
+    },
+    "prepayment_percent": {
+      "value": 0.0,
+      "source_quote": "Terms: Net 60",
+      "confidence": "high"
+    },
+    "warranty_months": {
+      "value": 18.0,
+      "source_quote": "Warranty: 18 months against defects in material and workmanship",
+      "confidence": "high"
+    },
+    "moq": {
+      "value": 250.0,
+      "source_quote": "Minimum order: 250 pieces",
+      "confidence": "high"
+    },
+    "supplier_exceptions": [
+      "Quote assumes customer-supplied gauges for final inspection."
+    ]
+  },
+  "meta": {
+    "source": "fixture",
+    "model": "hand-labeled fixture",
+    "prompt_version": null,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0.0,
+    "latency_s": 0.0,
+    "status": "ok"
+  }
+}
