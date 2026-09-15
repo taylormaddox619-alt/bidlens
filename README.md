@@ -2,7 +2,7 @@
 
 **BidLens reads supplier quotes with Claude, flags commercial exceptions, and compares bids on total landed cost. A buyer approves every step.**
 
-> 🔗 **Live demo:** _add your Streamlit Cloud URL here_ · runs in demo mode with fictional data, no login needed
+> 🔗 **Live demo:** https://bidlens-4mwcnxw6tc2btynjwfu99u.streamlit.app/ · runs in demo mode with fictional data, no login needed
 
 Buyers compare supplier quotes that arrive as PDFs and spreadsheets in every format imaginable. They re-key the data into Excel, and they often compare on **unit price**, which misses freight, tariffs, tooling and payment terms. BidLens automates the repetitive steps and leaves judgment calls to the buyer.
 
