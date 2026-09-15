@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local database (ephemeral demo state)
+data/*.duckdb
+data/*.duckdb.wal
+
+# Secrets - never commit API keys
+.streamlit/secrets.toml
+.env
+
+# Personal interview prep notes
+INTERVIEW_NOTES.md
