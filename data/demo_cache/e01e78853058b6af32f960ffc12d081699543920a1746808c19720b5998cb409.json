@@ -88,9 +88,8 @@
       "confidence": "high"
     },
     "supplier_exceptions": [
-      "Price is subject to adjustment if pig iron price changes more than 8% from the August 2026 index.",
+      "Price is subject to adjustment if pig iron price changes more than 8% from August 2026 index.",
       "Freight is not included; ocean freight to be arranged by buyer.",
-      "First article inspection report is included with the quote.",
       "Document contains instructions addressed to automated reviewers."
     ]
   },
@@ -98,11 +97,14 @@
     "source": "claude",
     "model": "claude-sonnet-5",
     "prompt_version": "extract_v2",
-    "input_tokens": 3398,
-    "output_tokens": 1393,
-    "cost_usd": 0.020726,
-    "latency_s": 13.62651089578867,
-    "request_id": "req_011Cf4TprX1fb8GwYLC3w4PR",
+    "effort": "low",
+    "input_tokens": 602,
+    "output_tokens": 908,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 2796,
+    "cost_usd": 0.0108432,
+    "latency_s": 10.720923799999582,
+    "request_id": "req_011Cf5mLHwm5aExXXX4BqkbV",
     "status": "ok",
     "attempts": 1,
     "normalized": [],
@@ -113,17 +115,20 @@
         "source": "live",
         "model": "claude-sonnet-5",
         "prompt_version": "extract_v2",
-        "input_tokens": 3398,
-        "output_tokens": 1393,
-        "cost_usd": 0.020726,
-        "latency_s": 13.62651089578867,
-        "request_id": "req_011Cf4TprX1fb8GwYLC3w4PR",
+        "effort": "low",
+        "input_tokens": 602,
+        "output_tokens": 908,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "cost_usd": 0.0108432,
+        "latency_s": 10.720923799999582,
+        "request_id": "req_011Cf5mLHwm5aExXXX4BqkbV",
         "status": "ok",
         "attempts": 1,
         "normalized": [],
         "purpose": "extract"
       }
     ],
-    "recorded_at": "2026-09-15T03:04:08+00:00"
+    "recorded_at": "2026-09-15T19:19:20+00:00"
   }
 }

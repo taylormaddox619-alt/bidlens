@@ -1,7 +1,7 @@
 # Extraction evaluation report
 
-- Run: 2026-09-15 18:59 UTC · configuration: **recorded extractions**
-- Source: recorded (claude) · model(s) `claude-sonnet-5` · prompt `extract_v2`
+- Run: 2026-09-15 19:20 UTC · configuration: **recorded extractions**
+- Source: recorded (claude) · model(s) `claude-sonnet-5` · prompt `extract_v2` · effort `low`
 - Documents: 4 · trials: 1 · runs scored: 4
 
 | Metric | Result | Target |
@@ -9,11 +9,11 @@
 | Field accuracy | 100.0% | ≥ 95% |
 | Citations found in document | 100.0% | 100% |
 | Exception recall | 100.0% | 100% |
-| Exception precision | 94% | ≥ 90% |
+| Exception precision | 100% | ≥ 90% |
 | Escalated to stronger model | 0% | |
-| Cost per document | $0.0259 ($0.0195–$0.0383) | |
-| Latency p50 / p95 (n=4) | 15.0 s / 24.2 s | |
-| Prompt cache hit rate | 0% of input tokens | |
+| Cost per document | $0.0118 ($0.0096–$0.0149) | |
+| Latency p50 / p95 (n=4) | 9.3 s / 10.6 s | |
+| Prompt cache hit rate | 84% of input tokens | |
 
 > With 4 scored runs, p95 is close to the maximum and a single field is 1.4% of accuracy. Treat small differences as noise.
 
@@ -43,4 +43,4 @@ Self-reported confidence per extracted field, against ground truth.
 Every field was correct in every trial.
 
 ## Misses (last trial)
-- **Q4_Sierra_Madre_Castings.xlsx** flags: expected ['MISSING_FIELD', 'PAYMENT_TERMS_BELOW_STANDARD'], found ['MISSING_FIELD', 'PAYMENT_TERMS_BELOW_STANDARD', 'SUPPLIER_EXCEPTIONS']
+None.

@@ -31,9 +31,12 @@ MODEL_ROUTES = {
 EXTRACT_PROMPT_VERSION = "extract_v2"  # v2: prepayment is null when not stated (v1 said 0, which cannot be cited)
 # Reasoning effort per extraction route (low | medium | high). None sends nothing, i.e. the
 # model default. Change only on the strength of `python evals/run_evals.py --compare --trials 3`.
+# 2026-09-15, 4 docs x 3 trials: low effort matched Opus and default-effort Sonnet at 100% field
+# accuracy while cutting cost/doc 13% and p50 latency 36% (evals/EVAL_LOG.md, run 4). The one
+# citation slip it produced in 12 runs was caught by the gate and fixed by escalation.
 EFFORT = {
-    "extract": os.environ.get("BIDLENS_EXTRACT_EFFORT") or None,
-    "extract_escalation": os.environ.get("BIDLENS_ESCALATION_EFFORT") or None,
+    "extract": os.environ.get("BIDLENS_EXTRACT_EFFORT", "low") or None,
+    "extract_escalation": os.environ.get("BIDLENS_ESCALATION_EFFORT") or None,  # Opus at its default
 }
 MEMO_PROMPT_VERSION = "memo_v1"
 GENERATE_PROMPT_VERSION = "generate_v1"

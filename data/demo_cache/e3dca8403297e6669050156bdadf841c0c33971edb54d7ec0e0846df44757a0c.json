@@ -106,19 +106,20 @@
       "source_quote": "Minimum Order Qty | 250",
       "confidence": "high"
     },
-    "supplier_exceptions": [
-      "Minimum order quantity (250) stated is lower than the RFQ requested quantity (500), which is not a deviation but noted for clarity."
-    ]
+    "supplier_exceptions": []
   },
   "meta": {
     "source": "claude",
     "model": "claude-sonnet-5",
     "prompt_version": "extract_v2",
-    "input_tokens": 3217,
-    "output_tokens": 1880,
-    "cost_usd": 0.025234,
-    "latency_s": 16.455818496644497,
-    "request_id": "req_011Cf4TtYfpweTX3dLkoQ2W3",
+    "effort": "low",
+    "input_tokens": 421,
+    "output_tokens": 1051,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 2796,
+    "cost_usd": 0.0119112,
+    "latency_s": 8.786631700000726,
+    "request_id": "req_011Cf5mNFuHQLW2kq94sEJuP",
     "status": "ok",
     "attempts": 1,
     "normalized": [],
@@ -129,17 +130,20 @@
         "source": "live",
         "model": "claude-sonnet-5",
         "prompt_version": "extract_v2",
-        "input_tokens": 3217,
-        "output_tokens": 1880,
-        "cost_usd": 0.025234,
-        "latency_s": 16.455818496644497,
-        "request_id": "req_011Cf4TtYfpweTX3dLkoQ2W3",
+        "effort": "low",
+        "input_tokens": 421,
+        "output_tokens": 1051,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "cost_usd": 0.0119112,
+        "latency_s": 8.786631700000726,
+        "request_id": "req_011Cf5mNFuHQLW2kq94sEJuP",
         "status": "ok",
         "attempts": 1,
         "normalized": [],
         "purpose": "extract"
       }
     ],
-    "recorded_at": "2026-09-15T03:05:01+00:00"
+    "recorded_at": "2026-09-15T19:19:45+00:00"
   }
 }

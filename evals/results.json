@@ -1,138 +1,267 @@
 {
   "config": "routed: claude-sonnet-5 \u2192 claude-opus-5",
-  "run_at": "2026-09-15 03:07 UTC",
+  "config_key": "routed",
+  "run_at": "2026-09-15 19:18 UTC",
   "source": "live Claude call",
   "model": "claude-sonnet-5",
   "prompt_version": "extract_v2",
+  "effort": "low",
   "documents": 4,
+  "trials": 3,
+  "n": 12,
   "field_accuracy": 1.0,
+  "field_accuracy_spread": {
+    "mean": 1.0,
+    "min": 1.0,
+    "max": 1.0
+  },
   "citation_rate": 1.0,
+  "citation_rate_spread": {
+    "mean": 1.0,
+    "min": 1.0,
+    "max": 1.0
+  },
   "flag_recall": 1.0,
+  "flag_recall_spread": {
+    "mean": 1.0,
+    "min": 1.0,
+    "max": 1.0
+  },
   "flag_precision": 1.0,
   "escalation_rate": 0.0,
-  "total_cost_usd": 0.08280199999999999,
-  "cost_per_document_usd": 0.020700499999999997,
-  "avg_latency_s": 11.431616347283125,
+  "total_cost_usd": 0.1362324,
+  "cost_per_document_usd": 0.0113527,
+  "cost_per_document_spread": {
+    "mean": 0.0113527,
+    "min": 0.0095892,
+    "max": 0.013907200000000002
+  },
+  "avg_latency_s": 7.434844091666794,
+  "latency_p50_s": 7.044226450001588,
+  "latency_p95_s": 9.097650055000667,
+  "tokens_per_document": {
+    "input_tokens": 539.25,
+    "output_tokens": 971.5,
+    "cache_write_tokens": 0.0,
+    "cache_read_tokens": 2796.0
+  },
+  "cache_hit_rate": 0.8383179671688779,
+  "cached_prefix_share": 0.8383179671688779,
+  "gate": {
+    "fired_wrong": 0,
+    "fired_ok": 0,
+    "quiet_wrong": 0,
+    "quiet_ok": 12,
+    "precision": null,
+    "recall": null,
+    "false_fire_rate": 0.0,
+    "n": 12
+  },
+  "calibration": {
+    "high": {
+      "count": 183,
+      "correct_rate": 1.0
+    }
+  },
+  "per_field": {
+    "supplier_name": 1.0,
+    "quote_number": 1.0,
+    "quote_date": 1.0,
+    "valid_until": 1.0,
+    "currency": 1.0,
+    "unit_price": 1.0,
+    "tooling_cost": 1.0,
+    "freight_cost": 1.0,
+    "incoterm": 1.0,
+    "incoterm_location": 1.0,
+    "country_of_origin": 1.0,
+    "lead_time_weeks": 1.0,
+    "payment_terms": 1.0,
+    "payment_terms_days": 1.0,
+    "prepayment_percent": 1.0,
+    "warranty_months": 1.0,
+    "moq": 1.0,
+    "price_tiers": 1.0
+  },
   "documents_detail": [
     {
       "filename": "Q1_Jadeport_Foundry.pdf",
       "model": "claude-sonnet-5",
       "escalated": false,
-      "cost_usd": 0.020916,
-      "latency_s": 12.16411679983139,
+      "cost_usd": 0.0108132,
+      "latency_s": 6.636508699997648,
+      "effort": "low",
+      "input_tokens": 602,
+      "output_tokens": 905,
+      "cache_write_tokens": 0,
+      "cache_read_tokens": 2796,
       "status": "ok",
       "fields": [
         {
           "field": "supplier_name",
+          "label": "Supplier",
           "expected": "Jadeport Foundry Co., Ltd.",
-          "actual": "JADEPORT FOUNDRY CO., LTD.",
-          "correct": true
+          "actual": "Jadeport Foundry Co., Ltd.",
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_number",
+          "label": "Quote #",
           "expected": "JPF-Q-26-0917",
           "actual": "JPF-Q-26-0917",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_date",
+          "label": "Quote date",
           "expected": "2026-08-24",
           "actual": "2026-08-24",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "valid_until",
+          "label": "Valid until",
           "expected": "2026-11-30",
           "actual": "2026-11-30",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "currency",
+          "label": "Currency",
           "expected": "USD",
           "actual": "USD",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "unit_price",
+          "label": "Unit price (at RFQ qty)",
           "expected": 172.0,
           "actual": 172.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "tooling_cost",
+          "label": "Tooling / one-time cost",
           "expected": 6000.0,
           "actual": 6000.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "freight_cost",
+          "label": "Freight cost (total)",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "incoterm",
+          "label": "Incoterm",
           "expected": "FOB",
           "actual": "FOB",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "incoterm_location",
+          "label": "Incoterm location",
           "expected": "Ningbo",
           "actual": "Ningbo",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "country_of_origin",
+          "label": "Country of origin",
           "expected": "CN",
           "actual": "CN",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "lead_time_weeks",
+          "label": "Lead time (weeks)",
           "expected": 10.0,
           "actual": 10.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms",
+          "label": "Payment terms",
           "expected": "Net 60 days from invoice date",
           "actual": "Net 60 days from invoice date",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms_days",
+          "label": "Payment days",
           "expected": 60.0,
           "actual": 60.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "prepayment_percent",
+          "label": "Prepayment %",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "warranty_months",
+          "label": "Warranty (months)",
           "expected": 12.0,
           "actual": 12.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "moq",
+          "label": "MOQ",
           "expected": 300.0,
           "actual": 300.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "price_tiers",
+          "label": "Price breaks",
           "expected": [],
           "actual": [],
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         }
       ],
-      "cites_ok": 15,
       "cites_total": 15,
+      "cites_ok": 15,
       "flags_found": [
         "FREIGHT_ESTIMATED",
         "SUPPLIER_EXCEPTIONS",
@@ -144,127 +273,188 @@
         "SUPPLIER_EXCEPTIONS",
         "SUSPICIOUS_INSTRUCTION",
         "TARIFF_EXPOSURE"
-      ]
+      ],
+      "gate_fired": false,
+      "gate_reasons": []
     },
     {
       "filename": "Q2_Kessler_Vogt.pdf",
       "model": "claude-sonnet-5",
       "escalated": false,
-      "cost_usd": 0.02257,
-      "latency_s": 11.991382099688053,
+      "cost_usd": 0.0120572,
+      "latency_s": 7.2379042000029585,
+      "effort": "low",
+      "input_tokens": 714,
+      "output_tokens": 1007,
+      "cache_write_tokens": 0,
+      "cache_read_tokens": 2796,
       "status": "ok",
       "fields": [
         {
           "field": "supplier_name",
+          "label": "Supplier",
           "expected": "Kessler & Vogt Gusstechnik GmbH",
           "actual": "Kessler & Vogt Gusstechnik GmbH",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_number",
+          "label": "Quote #",
           "expected": "KV-2026-4471",
           "actual": "KV-2026-4471",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_date",
+          "label": "Quote date",
           "expected": "2026-08-27",
           "actual": "2026-08-27",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "valid_until",
+          "label": "Valid until",
           "expected": "2026-12-15",
           "actual": "2026-12-15",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "currency",
+          "label": "Currency",
           "expected": "EUR",
           "actual": "EUR",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "unit_price",
+          "label": "Unit price (at RFQ qty)",
           "expected": 168.0,
           "actual": 168.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "tooling_cost",
+          "label": "Tooling / one-time cost",
           "expected": 2500.0,
           "actual": 2500.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "freight_cost",
+          "label": "Freight cost (total)",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "incoterm",
+          "label": "Incoterm",
           "expected": "EXW",
           "actual": "EXW",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "incoterm_location",
+          "label": "Incoterm location",
           "expected": "Stuttgart",
           "actual": "Stuttgart",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "country_of_origin",
+          "label": "Country of origin",
           "expected": "DE",
           "actual": "DE",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "lead_time_weeks",
+          "label": "Lead time (weeks)",
           "expected": 11.0,
           "actual": 11.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms",
+          "label": "Payment terms",
           "expected": "30% deposit with order, balance net 30 days",
           "actual": "30% deposit with order, balance net 30 days",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms_days",
+          "label": "Payment days",
           "expected": 30.0,
           "actual": 30.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "prepayment_percent",
+          "label": "Prepayment %",
           "expected": 30.0,
           "actual": 30.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "warranty_months",
+          "label": "Warranty (months)",
           "expected": 24.0,
           "actual": 24.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "moq",
+          "label": "MOQ",
           "expected": 100.0,
           "actual": 100.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "price_tiers",
+          "label": "Price breaks",
           "expected": [],
           "actual": [],
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         }
       ],
-      "cites_ok": 16,
       "cites_total": 16,
+      "cites_ok": 16,
       "flags_found": [
         "CURRENCY_MISMATCH",
         "FREIGHT_ESTIMATED",
@@ -280,127 +470,188 @@
         "PREPAYMENT_REQUIRED",
         "SUPPLIER_EXCEPTIONS",
         "TARIFF_EXPOSURE"
-      ]
+      ],
+      "gate_fired": false,
+      "gate_reasons": []
     },
     {
       "filename": "Q3_Lakeshore_Cast.pdf",
       "model": "claude-sonnet-5",
       "escalated": false,
-      "cost_usd": 0.019172,
-      "latency_s": 9.922524891793728,
+      "cost_usd": 0.0095892,
+      "latency_s": 6.07002029999785,
+      "effort": "low",
+      "input_tokens": 420,
+      "output_tokens": 819,
+      "cache_write_tokens": 0,
+      "cache_read_tokens": 2796,
       "status": "ok",
       "fields": [
         {
           "field": "supplier_name",
+          "label": "Supplier",
           "expected": "Lakeshore Cast Components, Inc.",
-          "actual": "LAKESHORE CAST COMPONENTS, INC.",
-          "correct": true
+          "actual": "Lakeshore Cast Components, Inc.",
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_number",
+          "label": "Quote #",
           "expected": "LCC-58213",
           "actual": "LCC-58213",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_date",
+          "label": "Quote date",
           "expected": "2026-07-15",
           "actual": "2026-07-15",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "valid_until",
+          "label": "Valid until",
           "expected": "2026-08-31",
           "actual": "2026-08-31",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "currency",
+          "label": "Currency",
           "expected": "USD",
           "actual": "USD",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "unit_price",
+          "label": "Unit price (at RFQ qty)",
           "expected": 214.0,
           "actual": 214.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "tooling_cost",
+          "label": "Tooling / one-time cost",
           "expected": 0.0,
           "actual": 0.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "freight_cost",
+          "label": "Freight cost (total)",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "incoterm",
+          "label": "Incoterm",
           "expected": "DAP",
           "actual": "DAP",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "incoterm_location",
+          "label": "Incoterm location",
           "expected": "Charlotte, NC",
           "actual": "Charlotte, NC",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "country_of_origin",
+          "label": "Country of origin",
           "expected": "US",
           "actual": "US",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "lead_time_weeks",
+          "label": "Lead time (weeks)",
           "expected": 16.0,
           "actual": 16.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms",
+          "label": "Payment terms",
           "expected": "Net 60",
           "actual": "Net 60",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms_days",
+          "label": "Payment days",
           "expected": 60.0,
           "actual": 60.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "prepayment_percent",
+          "label": "Prepayment %",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "warranty_months",
+          "label": "Warranty (months)",
           "expected": 18.0,
           "actual": 18.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "moq",
+          "label": "MOQ",
           "expected": 250.0,
           "actual": 250.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "price_tiers",
+          "label": "Price breaks",
           "expected": [],
           "actual": [],
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         }
       ],
-      "cites_ok": 15,
       "cites_total": 15,
+      "cites_ok": 15,
       "flags_found": [
         "LEAD_TIME_EXCEEDS",
         "QUOTE_EXPIRED",
@@ -410,120 +661,179 @@
         "LEAD_TIME_EXCEEDS",
         "QUOTE_EXPIRED",
         "SUPPLIER_EXCEPTIONS"
-      ]
+      ],
+      "gate_fired": false,
+      "gate_reasons": []
     },
     {
       "filename": "Q4_Sierra_Madre_Castings.xlsx",
       "model": "claude-sonnet-5",
       "escalated": false,
-      "cost_usd": 0.020144,
-      "latency_s": 11.648441597819328,
+      "cost_usd": 0.0125412,
+      "latency_s": 9.112952100000257,
+      "effort": "low",
+      "input_tokens": 421,
+      "output_tokens": 1114,
+      "cache_write_tokens": 0,
+      "cache_read_tokens": 2796,
       "status": "ok",
       "fields": [
         {
           "field": "supplier_name",
+          "label": "Supplier",
           "expected": "Sierra Madre Castings S.A. de C.V.",
           "actual": "Sierra Madre Castings S.A. de C.V.",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_number",
+          "label": "Quote #",
           "expected": "SMC-2026-311",
           "actual": "SMC-2026-311",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "quote_date",
+          "label": "Quote date",
           "expected": "2026-08-30",
           "actual": "2026-08-30",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "valid_until",
+          "label": "Valid until",
           "expected": "2026-10-31",
           "actual": "2026-10-31",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "currency",
+          "label": "Currency",
           "expected": "USD",
           "actual": "USD",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "unit_price",
+          "label": "Unit price (at RFQ qty)",
           "expected": 194.0,
           "actual": 194.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "tooling_cost",
+          "label": "Tooling / one-time cost",
           "expected": 3000.0,
           "actual": 3000.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "freight_cost",
+          "label": "Freight cost (total)",
           "expected": 3250.0,
           "actual": 3250.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "incoterm",
+          "label": "Incoterm",
           "expected": "FCA",
           "actual": "FCA",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "incoterm_location",
+          "label": "Incoterm location",
           "expected": "Monterrey",
           "actual": "Monterrey",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "country_of_origin",
+          "label": "Country of origin",
           "expected": "MX",
           "actual": "MX",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "lead_time_weeks",
+          "label": "Lead time (weeks)",
           "expected": 8.0,
           "actual": 8.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms",
+          "label": "Payment terms",
           "expected": "Net 45",
           "actual": "Net 45",
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "payment_terms_days",
+          "label": "Payment days",
           "expected": 45.0,
           "actual": 45.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "prepayment_percent",
+          "label": "Prepayment %",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "warranty_months",
+          "label": "Warranty (months)",
           "expected": null,
           "actual": null,
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         },
         {
           "field": "moq",
+          "label": "MOQ",
           "expected": 250.0,
           "actual": 250.0,
-          "correct": true
+          "correct": true,
+          "confidence": "high",
+          "cited": true
         },
         {
           "field": "price_tiers",
+          "label": "Price breaks",
           "expected": [
             [
               1,
@@ -552,11 +862,13 @@
               194.0
             ]
           ],
-          "correct": true
+          "correct": true,
+          "confidence": null,
+          "cited": null
         }
       ],
-      "cites_ok": 15,
       "cites_total": 15,
+      "cites_ok": 15,
       "flags_found": [
         "MISSING_FIELD",
         "PAYMENT_TERMS_BELOW_STANDARD"
@@ -564,7 +876,2405 @@
       "flags_expected": [
         "MISSING_FIELD",
         "PAYMENT_TERMS_BELOW_STANDARD"
-      ]
+      ],
+      "gate_fired": false,
+      "gate_reasons": []
     }
+  ],
+  "trials_detail": [
+    [
+      {
+        "filename": "Q1_Jadeport_Foundry.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.010783200000000001,
+        "latency_s": 6.850548700000218,
+        "effort": "low",
+        "input_tokens": 602,
+        "output_tokens": 902,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Jadeport Foundry Co., Ltd.",
+            "actual": "Jadeport Foundry Co., Ltd.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "JPF-Q-26-0917",
+            "actual": "JPF-Q-26-0917",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-24",
+            "actual": "2026-08-24",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-11-30",
+            "actual": "2026-11-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 172.0,
+            "actual": 172.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 6000.0,
+            "actual": 6000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FOB",
+            "actual": "FOB",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Ningbo",
+            "actual": "Ningbo",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "CN",
+            "actual": "CN",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 10.0,
+            "actual": 10.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60 days from invoice date",
+            "actual": "Net 60 days from invoice date",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 12.0,
+            "actual": 12.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 300.0,
+            "actual": 300.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q2_Kessler_Vogt.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.012087200000000001,
+        "latency_s": 7.815387300001021,
+        "effort": "low",
+        "input_tokens": 714,
+        "output_tokens": 1010,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Kessler & Vogt Gusstechnik GmbH",
+            "actual": "Kessler & Vogt Gusstechnik GmbH",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "KV-2026-4471",
+            "actual": "KV-2026-4471",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-27",
+            "actual": "2026-08-27",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-12-15",
+            "actual": "2026-12-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "EUR",
+            "actual": "EUR",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 168.0,
+            "actual": 168.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 2500.0,
+            "actual": 2500.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "EXW",
+            "actual": "EXW",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Stuttgart",
+            "actual": "Stuttgart",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "DE",
+            "actual": "DE",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 11.0,
+            "actual": 11.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "30% deposit with order, balance net 30 days",
+            "actual": "30% deposit with order, balance net 30 days",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 24.0,
+            "actual": 24.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 100.0,
+            "actual": 100.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 16,
+        "cites_ok": 16,
+        "flags_found": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q3_Lakeshore_Cast.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0096092,
+        "latency_s": 6.36768579999989,
+        "effort": "low",
+        "input_tokens": 420,
+        "output_tokens": 821,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Lakeshore Cast Components, Inc.",
+            "actual": "Lakeshore Cast Components, Inc.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "LCC-58213",
+            "actual": "LCC-58213",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-07-15",
+            "actual": "2026-07-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-08-31",
+            "actual": "2026-08-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 214.0,
+            "actual": 214.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 0.0,
+            "actual": 0.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "DAP",
+            "actual": "DAP",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Charlotte, NC",
+            "actual": "Charlotte, NC",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "US",
+            "actual": "US",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 16.0,
+            "actual": 16.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60",
+            "actual": "Net 60",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 18.0,
+            "actual": 18.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "flags_expected": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q4_Sierra_Madre_Castings.xlsx",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0123712,
+        "latency_s": 8.747027000001253,
+        "effort": "low",
+        "input_tokens": 421,
+        "output_tokens": 1097,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Sierra Madre Castings S.A. de C.V.",
+            "actual": "Sierra Madre Castings S.A. de C.V.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "SMC-2026-311",
+            "actual": "SMC-2026-311",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-30",
+            "actual": "2026-08-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-10-31",
+            "actual": "2026-10-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 194.0,
+            "actual": 194.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 3000.0,
+            "actual": 3000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": 3250.0,
+            "actual": 3250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FCA",
+            "actual": "FCA",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Monterrey",
+            "actual": "Monterrey",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "MX",
+            "actual": "MX",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 8.0,
+            "actual": 8.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 45",
+            "actual": "Net 45",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 45.0,
+            "actual": 45.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "actual": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "flags_expected": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      }
+    ],
+    [
+      {
+        "filename": "Q1_Jadeport_Foundry.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0107332,
+        "latency_s": 6.743460400000913,
+        "effort": "low",
+        "input_tokens": 602,
+        "output_tokens": 897,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Jadeport Foundry Co., Ltd.",
+            "actual": "Jadeport Foundry Co., Ltd.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "JPF-Q-26-0917",
+            "actual": "JPF-Q-26-0917",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-24",
+            "actual": "2026-08-24",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-11-30",
+            "actual": "2026-11-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 172.0,
+            "actual": 172.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 6000.0,
+            "actual": 6000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FOB",
+            "actual": "FOB",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Ningbo",
+            "actual": "Ningbo",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "CN",
+            "actual": "CN",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 10.0,
+            "actual": 10.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60 days from invoice date",
+            "actual": "Net 60 days from invoice date",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 12.0,
+            "actual": 12.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 300.0,
+            "actual": 300.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q2_Kessler_Vogt.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.013907200000000002,
+        "latency_s": 9.085130200001004,
+        "effort": "low",
+        "input_tokens": 714,
+        "output_tokens": 1192,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Kessler & Vogt Gusstechnik GmbH",
+            "actual": "Kessler & Vogt Gusstechnik GmbH",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "KV-2026-4471",
+            "actual": "KV-2026-4471",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-27",
+            "actual": "2026-08-27",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-12-15",
+            "actual": "2026-12-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "EUR",
+            "actual": "EUR",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 168.0,
+            "actual": 168.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 2500.0,
+            "actual": 2500.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "EXW",
+            "actual": "EXW",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Stuttgart",
+            "actual": "Stuttgart",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "DE",
+            "actual": "DE",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 11.0,
+            "actual": 11.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "30% deposit with order, balance net 30 days",
+            "actual": "30% deposit with order, balance net 30 days",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 24.0,
+            "actual": 24.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 100.0,
+            "actual": 100.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 16,
+        "cites_ok": 16,
+        "flags_found": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q3_Lakeshore_Cast.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.009619200000000001,
+        "latency_s": 6.138137099998858,
+        "effort": "low",
+        "input_tokens": 420,
+        "output_tokens": 822,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Lakeshore Cast Components, Inc.",
+            "actual": "Lakeshore Cast Components, Inc.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "LCC-58213",
+            "actual": "LCC-58213",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-07-15",
+            "actual": "2026-07-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-08-31",
+            "actual": "2026-08-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 214.0,
+            "actual": 214.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 0.0,
+            "actual": 0.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "DAP",
+            "actual": "DAP",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Charlotte, NC",
+            "actual": "Charlotte, NC",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "US",
+            "actual": "US",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 16.0,
+            "actual": 16.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60",
+            "actual": "Net 60",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 18.0,
+            "actual": 18.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "flags_expected": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q4_Sierra_Madre_Castings.xlsx",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0121212,
+        "latency_s": 8.413367299999663,
+        "effort": "low",
+        "input_tokens": 421,
+        "output_tokens": 1072,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Sierra Madre Castings S.A. de C.V.",
+            "actual": "Sierra Madre Castings S.A. de C.V.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "SMC-2026-311",
+            "actual": "SMC-2026-311",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-30",
+            "actual": "2026-08-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-10-31",
+            "actual": "2026-10-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 194.0,
+            "actual": 194.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 3000.0,
+            "actual": 3000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": 3250.0,
+            "actual": 3250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FCA",
+            "actual": "FCA",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Monterrey",
+            "actual": "Monterrey",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "MX",
+            "actual": "MX",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 8.0,
+            "actual": 8.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 45",
+            "actual": "Net 45",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 45.0,
+            "actual": 45.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "actual": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "flags_expected": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      }
+    ],
+    [
+      {
+        "filename": "Q1_Jadeport_Foundry.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0108132,
+        "latency_s": 6.636508699997648,
+        "effort": "low",
+        "input_tokens": 602,
+        "output_tokens": 905,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Jadeport Foundry Co., Ltd.",
+            "actual": "Jadeport Foundry Co., Ltd.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "JPF-Q-26-0917",
+            "actual": "JPF-Q-26-0917",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-24",
+            "actual": "2026-08-24",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-11-30",
+            "actual": "2026-11-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 172.0,
+            "actual": 172.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 6000.0,
+            "actual": 6000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FOB",
+            "actual": "FOB",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Ningbo",
+            "actual": "Ningbo",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "CN",
+            "actual": "CN",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 10.0,
+            "actual": 10.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60 days from invoice date",
+            "actual": "Net 60 days from invoice date",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 12.0,
+            "actual": 12.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 300.0,
+            "actual": 300.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "FREIGHT_ESTIMATED",
+          "SUPPLIER_EXCEPTIONS",
+          "SUSPICIOUS_INSTRUCTION",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q2_Kessler_Vogt.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0120572,
+        "latency_s": 7.2379042000029585,
+        "effort": "low",
+        "input_tokens": 714,
+        "output_tokens": 1007,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Kessler & Vogt Gusstechnik GmbH",
+            "actual": "Kessler & Vogt Gusstechnik GmbH",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "KV-2026-4471",
+            "actual": "KV-2026-4471",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-27",
+            "actual": "2026-08-27",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-12-15",
+            "actual": "2026-12-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "EUR",
+            "actual": "EUR",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 168.0,
+            "actual": 168.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 2500.0,
+            "actual": 2500.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "EXW",
+            "actual": "EXW",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Stuttgart",
+            "actual": "Stuttgart",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "DE",
+            "actual": "DE",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 11.0,
+            "actual": 11.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "30% deposit with order, balance net 30 days",
+            "actual": "30% deposit with order, balance net 30 days",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": 30.0,
+            "actual": 30.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 24.0,
+            "actual": 24.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 100.0,
+            "actual": 100.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 16,
+        "cites_ok": 16,
+        "flags_found": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "flags_expected": [
+          "CURRENCY_MISMATCH",
+          "FREIGHT_ESTIMATED",
+          "PAYMENT_TERMS_BELOW_STANDARD",
+          "PREPAYMENT_REQUIRED",
+          "SUPPLIER_EXCEPTIONS",
+          "TARIFF_EXPOSURE"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q3_Lakeshore_Cast.pdf",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0095892,
+        "latency_s": 6.07002029999785,
+        "effort": "low",
+        "input_tokens": 420,
+        "output_tokens": 819,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Lakeshore Cast Components, Inc.",
+            "actual": "Lakeshore Cast Components, Inc.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "LCC-58213",
+            "actual": "LCC-58213",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-07-15",
+            "actual": "2026-07-15",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-08-31",
+            "actual": "2026-08-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 214.0,
+            "actual": 214.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 0.0,
+            "actual": 0.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "DAP",
+            "actual": "DAP",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Charlotte, NC",
+            "actual": "Charlotte, NC",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "US",
+            "actual": "US",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 16.0,
+            "actual": 16.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 60",
+            "actual": "Net 60",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 60.0,
+            "actual": 60.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": 18.0,
+            "actual": 18.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [],
+            "actual": [],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "flags_expected": [
+          "LEAD_TIME_EXCEEDS",
+          "QUOTE_EXPIRED",
+          "SUPPLIER_EXCEPTIONS"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      },
+      {
+        "filename": "Q4_Sierra_Madre_Castings.xlsx",
+        "model": "claude-sonnet-5",
+        "escalated": false,
+        "cost_usd": 0.0125412,
+        "latency_s": 9.112952100000257,
+        "effort": "low",
+        "input_tokens": 421,
+        "output_tokens": 1114,
+        "cache_write_tokens": 0,
+        "cache_read_tokens": 2796,
+        "status": "ok",
+        "fields": [
+          {
+            "field": "supplier_name",
+            "label": "Supplier",
+            "expected": "Sierra Madre Castings S.A. de C.V.",
+            "actual": "Sierra Madre Castings S.A. de C.V.",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_number",
+            "label": "Quote #",
+            "expected": "SMC-2026-311",
+            "actual": "SMC-2026-311",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "quote_date",
+            "label": "Quote date",
+            "expected": "2026-08-30",
+            "actual": "2026-08-30",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "valid_until",
+            "label": "Valid until",
+            "expected": "2026-10-31",
+            "actual": "2026-10-31",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "currency",
+            "label": "Currency",
+            "expected": "USD",
+            "actual": "USD",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "unit_price",
+            "label": "Unit price (at RFQ qty)",
+            "expected": 194.0,
+            "actual": 194.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "tooling_cost",
+            "label": "Tooling / one-time cost",
+            "expected": 3000.0,
+            "actual": 3000.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "freight_cost",
+            "label": "Freight cost (total)",
+            "expected": 3250.0,
+            "actual": 3250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm",
+            "label": "Incoterm",
+            "expected": "FCA",
+            "actual": "FCA",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "incoterm_location",
+            "label": "Incoterm location",
+            "expected": "Monterrey",
+            "actual": "Monterrey",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "country_of_origin",
+            "label": "Country of origin",
+            "expected": "MX",
+            "actual": "MX",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "lead_time_weeks",
+            "label": "Lead time (weeks)",
+            "expected": 8.0,
+            "actual": 8.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms",
+            "label": "Payment terms",
+            "expected": "Net 45",
+            "actual": "Net 45",
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "payment_terms_days",
+            "label": "Payment days",
+            "expected": 45.0,
+            "actual": 45.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "prepayment_percent",
+            "label": "Prepayment %",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "warranty_months",
+            "label": "Warranty (months)",
+            "expected": null,
+            "actual": null,
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          },
+          {
+            "field": "moq",
+            "label": "MOQ",
+            "expected": 250.0,
+            "actual": 250.0,
+            "correct": true,
+            "confidence": "high",
+            "cited": true
+          },
+          {
+            "field": "price_tiers",
+            "label": "Price breaks",
+            "expected": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "actual": [
+              [
+                1,
+                205.0
+              ],
+              [
+                250,
+                199.0
+              ],
+              [
+                500,
+                194.0
+              ]
+            ],
+            "correct": true,
+            "confidence": null,
+            "cited": null
+          }
+        ],
+        "cites_total": 15,
+        "cites_ok": 15,
+        "flags_found": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "flags_expected": [
+          "MISSING_FIELD",
+          "PAYMENT_TERMS_BELOW_STANDARD"
+        ],
+        "gate_fired": false,
+        "gate_reasons": []
+      }
+    ]
   ]
 }

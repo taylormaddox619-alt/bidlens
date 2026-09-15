@@ -25,6 +25,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+# Windows consoles default to cp1252; never let a progress line kill a paid run.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="replace")
+
 from bidlens import config, rules  # noqa: E402
 from bidlens.credentials import get_secret  # noqa: E402
 from bidlens.extract import demo_extraction, escalation_reasons, live_extraction, routed_extraction  # noqa: E402
@@ -417,12 +422,14 @@ def main(argv: list[str] | None = None) -> list[dict]:
         names = ["routed"]
 
     summaries = []
+    partial = config.EVALS_DIR / "results_partial.json"  # survives a crash mid-comparison
     for name in names:
         trials = []
         for i in range(args.trials):
             print(f"\n== {configs[name]['label']}" + (f" · trial {i + 1}/{args.trials}" if args.trials > 1 else ""))
             trials.append(evaluate_once(name, configs[name], truths, rfq, args.workers))
         summaries.append(aggregate(trials))
+        partial.write_text(json.dumps(summaries, indent=2, default=str), encoding="utf-8")
 
     out_name = args.out or ("results_demo.json" if args.demo else "results.json")
     report_name = "report_demo.md" if args.demo else "report.md"
@@ -436,6 +443,7 @@ def main(argv: list[str] | None = None) -> list[dict]:
     if not args.demo:
         append_history(summaries, config.EVALS_DIR / "history.jsonl")
         written.append("history.jsonl (appended)")
+    partial.unlink(missing_ok=True)
 
     print()
     for s in summaries:

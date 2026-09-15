@@ -37,3 +37,33 @@ How the eval harness drove changes. Latest full results: [model_comparison.md](m
 - **Limitation:** 4 labeled documents is enough to catch systematic problems like the two above, not to certify accuracy. Before production use, expand to 30–50 real historical quotes with repeated trials.
 
 Total API spend for runs 1–3: about $1.10.
+
+## 2026-09-15 · Run 4: cost, latency and routing levers (prompt `extract_v2`, 3 trials)
+
+Goal: replace single-trial numbers with repeated trials and measure the two cost levers the harness had never touched, prompt caching and reasoning effort.
+
+**Probe first (`scripts/probe_api.py`, one document, $0.12).** The prompt file alone is ~600 tokens, below Sonnet's minimum cacheable prefix, but the structured-output schema counts toward the prefix: the second identical call read 2,796 tokens from cache. Effort turned out to be part of the cache key (each effort level wrote its own cache entry). Low effort cut output tokens from 1,380 to 904 and latency from 13.6 s to 8.0 s on that document, with the gate passing.
+
+**Comparison (`--compare --trials 3`, 4 documents × 3 trials × 6 configurations, $1.65).**
+
+| Configuration | Field accuracy | Citations | Recall | Escalated | Cost / doc | p50 | p95 | Cache hit |
+|---|---|---|---|---|---|---|---|---|
+| Opus 5 only | 100% | 100% | 100% | 0% | $0.0306 | 10.0 s | 12.5 s | 84% |
+| Sonnet 5 only | 100% | 100% | 100% | 0% | $0.0164 | 11.6 s | 15.8 s | 84% |
+| Sonnet 5, effort=low | 100% | 100% | 100% | 0% | $0.0116 | 7.8 s | 10.5 s | 84% |
+| Sonnet 5, effort=medium | 100% | 100% | 100% | 0% | $0.0129 | 8.9 s | 10.7 s | 84% |
+| Routed (default effort) | 100% | 100% | 100% | 0% | $0.0168 | 11.8 s | 14.6 s | 84% |
+| Routed, first pass effort=low | 100% | 100% | 100% | 8% | $0.0147 | 7.6 s | 15.9 s | 83% |
+
+- **Accuracy did not separate the configurations**: 72 runs, every field correct, so the routing decision is about cost, latency and the safety net.
+- **Effort is the larger lever.** Output tokens are ~85% of per-document cost; low effort took Sonnet from $0.0164 to $0.0116 per document (−29%) and p50 from 11.6 s to 7.8 s. Medium sat between.
+- **Caching is the second lever**: with 84% of input tokens read from cache, input cost per document is $0.0016 instead of $0.0067, about 31% of the total at low effort. Run 3's "$0.021 per quote" was measured before either lever existed.
+- **The gate fired once in 12 low-effort routed runs** (Kessler & Vogt, the bilingual German quote): `payment_terms_days: citation not found in document`. Opus re-extracted it correctly. That one escalation ($0.05, 22 s) is the entire cost difference between Sonnet-low alone and routed-low, and it is the reason routed-low's p95 is the highest in the table. Gate precision on this set is therefore 0 of 1 fired-and-wrong by the strict definition (the final answer was right), and there were no quiet-and-wrong runs in any configuration.
+- **Calibration**: 1,094 fields reported `high` confidence and 4 `medium`; all correct. Self-reported confidence carries no signal on this set, which is why the gate is built on citation checks.
+- **Harness lesson**: the first attempt at this run crashed after four configurations because the Windows console could not print "→" in a progress line, losing ~$1.20 of calls. The runner now tolerates any console encoding and writes `results_partial.json` after each configuration.
+
+**Decision:** production first pass moves to `claude-sonnet-5` at `effort=low` (`config.EFFORT`), escalation unchanged. Confirmation run of the production configuration (`--trials 3`, $0.14): 100% accuracy, 100% citations, 0 escalations, **$0.0114 per document, p50 7.0 s, p95 9.1 s**. Demo cache re-recorded on the same configuration ($0.05).
+
+**What would reverse it:** any quiet-and-wrong run (a wrong extraction the gate did not catch) at low effort; or escalation rate high enough that routed-low costs more than routed-default (break-even is about 1 escalation in 2 documents).
+
+Total API spend for run 4: about $3.15 including the lost attempt. Cumulative: about $4.25.

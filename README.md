@@ -69,7 +69,7 @@ generate (demo only): code picks terms (answer key) ─► Claude writes documen
 ```
 
 - **LLM:** Anthropic Claude via schema-constrained structured outputs (Pydantic). Prompts are versioned files in `bidlens/prompts/` (`extract_v2`, `memo_v1`, `generate_v1`).
-- **Cost-aware model routing:** extraction runs on `claude-sonnet-5` and escalates to `claude-opus-5` only when the output fails automatic checks: a citation not found in the document, low confidence on a required field, no price, an unreadable date or country, or a schema failure. Memos and test-quote writing use Sonnet at lower effort. Rules, costing and scoring use no LLM.
+- **Cost-aware model routing:** extraction runs on `claude-sonnet-5` at low reasoning effort and escalates to `claude-opus-5` only when the output fails automatic checks: a citation not found in the document, low confidence on a required field, no price, an unreadable date or country, or a schema failure. The system prompt and output schema are prompt-cached (84% of input tokens served from cache). Memos and test-quote writing use Sonnet at lower effort. Rules, costing and scoring use no LLM. See [Cost, latency and routing](#cost-latency-and-routing).
 - **Guardrails:**
   - verbatim citations checked against the source, and null-not-guess instructions;
   - deterministic normalization, plus untrusted-document framing and a prompt-injection detector;
@@ -79,7 +79,27 @@ generate (demo only): code picks terms (answer key) ─► Claude writes documen
 - **Deploys:** Streamlit multipage app. `reload_guard.py` reloads redeployed modules so a push can't leave stale code running.
 - **Quality:** pytest suite covering rules, recommended actions, costing, scoring, review edits, normalization, routing, the generator, UI guidance logic and the reload guard, plus an evaluation harness against labelled ground truth. [EVAL_LOG.md](evals/EVAL_LOG.md) shows how eval runs found two real defects (a prompt contradiction, and an unparsed expiry date that hid an expired quote) and how they were fixed.
 
-**Latest eval (4 labelled quotes):** routed extraction matched Opus-only at 100% field accuracy and 100% exception recall, for **$0.021 vs $0.043 per quote**. See [model_comparison.md](evals/model_comparison.md).
+## Cost, latency and routing
+
+Routing is a measured decision, not a default. Every configuration below ran the 4 labelled quotes 3 times (12 runs each, 2026-09-15, prompt `extract_v2`). Full tables, the gate 2×2 and confidence calibration are in [model_comparison.md](evals/model_comparison.md); every run is appended to [history.jsonl](evals/history.jsonl) and charted on the AI Scorecard page.
+
+| Configuration | Field accuracy | Exception recall | Escalated | Cost / doc | Latency p50 | p95 |
+|---|---|---|---|---|---|---|
+| Opus 5 only | 100% | 100% | 0% | $0.0306 | 10.0 s | 12.5 s |
+| Sonnet 5 only (default effort) | 100% | 100% | 0% | $0.0164 | 11.6 s | 15.8 s |
+| Sonnet 5 only, effort=medium | 100% | 100% | 0% | $0.0129 | 8.9 s | 10.7 s |
+| Sonnet 5 only, effort=low | 100% | 100% | 0% | $0.0116 | 7.8 s | 10.5 s |
+| Routed, default effort | 100% | 100% | 0% | $0.0168 | 11.8 s | 14.6 s |
+| **Routed, effort=low (production)** | **100%** | **100%** | 8% | **$0.0147** | **7.6 s** | 15.9 s |
+
+Accuracy was identical in all 72 runs, so the decision comes down to cost, latency and safety:
+
+- **Reasoning effort is the biggest lever.** Output tokens are ~85% of per-document cost. Low effort cut Sonnet's output by a third: cost/doc −29%, p50 latency −33% versus default effort, with no accuracy loss. Production now runs the first pass at `effort=low` (`config.EFFORT`).
+- **Prompt caching is the second lever.** The system prompt plus the structured-output schema form a ~2,800-token stable prefix, so 84% of input tokens are served from cache at 0.1× the input price. Per document that is $0.0016 instead of $0.0067 of input, about 31% off the total. Cache write/read tokens are logged on every run and priced separately, so the scorecard's spend is exact. Note that effort is part of the cache key: changing it invalidates the prefix.
+- **The escalation gate earns its keep at low effort.** In 12 routed runs it fired once, on the bilingual German quote, because the payment-terms citation was not verbatim; Opus re-extracted it correctly. That single escalation costs $0.05 and 22 s, which is why routed low-effort averages $0.0147 rather than $0.0116 and why its p95 is the highest in the table. It is still cheaper and faster at the median than routing at default effort, and it keeps the safety net.
+- **Confidence is honest but uninformative here.** Across 1,098 extracted fields the model reported `high` on all but 4, and every one was correct, so the gate relies on citation checks rather than self-reported confidence.
+
+**What would change the decision:** a wrong extraction that the gate misses (quiet & wrong > 0) would move the first pass back to default effort; Haiku is only worth testing once the labelled set reaches 30+ real quotes; for offline batch re-extraction the Batches API would halve cost again at the price of latency, and is not built. The production run after the change (`evals/report.md`): **$0.0114 per document, p50 7.0 s, p95 9.1 s, 0 escalations, 100% accuracy over 12 runs.**
 
 ## Run locally
 
@@ -102,13 +122,17 @@ On Streamlit Community Cloud, add the same values under **App settings → Secre
 ## Test and evaluate
 
 ```bash
-pytest                                  # unit tests (no API calls)
-python evals/run_evals.py               # live extraction accuracy vs ground truth -> evals/report.md
-python evals/run_evals.py --compare     # routed vs. Sonnet-only vs. Opus-only -> evals/model_comparison.md
-python evals/run_evals.py --demo        # pipeline + rules check on recorded extractions (no API cost)
-python scripts/record_demo_cache.py     # record real Claude extractions for demo mode
-python scripts/make_samples.py          # regenerate the synthetic quotes and ground truth
+pytest                                        # unit tests (no API calls)
+python evals/run_evals.py --trials 3          # production routing, 3 trials -> evals/report.md, history.jsonl
+python evals/run_evals.py --compare --trials 3  # models x effort levels x routed -> evals/model_comparison.md (~$2)
+python evals/run_evals.py --configs sonnet-low,routed
+python evals/run_evals.py --demo              # pipeline + rules check on recorded extractions (no API cost)
+python scripts/probe_api.py                   # does the prompt cache? what does effort do? (~$0.15)
+python scripts/record_demo_cache.py           # record real Claude extractions for demo mode
+python scripts/make_samples.py                # regenerate the synthetic quotes and ground truth
 ```
+
+Each live run appends one line per configuration to `evals/history.jsonl` (git SHA, model, effort, prompt, accuracy, cost, p50/p95, cache hit rate, gate stats), which the AI Scorecard charts over time. CI (`.github/workflows/ci.yml`) runs the unit tests and the `--demo` eval on every push and fails if exception recall or verified citations drop below 100%.
 
 ## Project structure
 
@@ -133,9 +157,11 @@ data/samples/            synthetic supplier quotes + demo RFQ
 data/ground_truth/       labelled answers for evals
 data/demo_cache/         recorded Claude extractions replayed in demo mode
 data/reference/          illustrative tariff, freight and FX tables
-evals/                   evaluation harness, results, EVAL_LOG.md
+evals/                   evaluation harness, results, model_comparison.md, history.jsonl, EVAL_LOG.md
 docs/                    REQUIREMENTS.md, GOVERNANCE.md, USER_GUIDE.md
 tests/                   pytest suite
+scripts/                 sample generation, demo-cache recording, API probe
+.github/workflows/       CI: tests + recorded-extraction regression gate
 .devcontainer/           GitHub Codespaces setup
 ```
 
@@ -151,7 +177,7 @@ tests/                   pytest suite
 - Tariff, freight and FX tables are illustrative, not live rates.
 - Scanned image-only PDFs need OCR.
 - Scoring weights are a starting point to calibrate with category managers.
-- The eval set is 4 labelled quotes: enough to catch systematic defects, not to certify accuracy.
+- The eval set is 4 labelled quotes run 3 times per configuration: enough to catch systematic defects and to see run-to-run variation, not to certify accuracy. With 12 runs, p95 latency is close to the maximum.
 - All companies and data in this repository are fictional.
 
 ---

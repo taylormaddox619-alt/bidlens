@@ -19,13 +19,13 @@
 
 ## Model routing
 
-Each task runs on the cheapest model expected to do it reliably. Routing is configurable (`BIDLENS_EXTRACT_MODEL`, `BIDLENS_ESCALATION_MODEL`, `BIDLENS_MEMO_MODEL`) and must be confirmed with `python evals/run_evals.py --compare` before any change.
+Each task runs on the cheapest model and reasoning effort expected to do it reliably. Routing and effort are configurable (`BIDLENS_EXTRACT_MODEL`, `BIDLENS_ESCALATION_MODEL`, `BIDLENS_MEMO_MODEL`, `BIDLENS_EXTRACT_EFFORT`, `BIDLENS_ESCALATION_EFFORT`) and any change must be confirmed with `python evals/run_evals.py --compare --trials 3` and recorded in `evals/EVAL_LOG.md`. Every model call logs model, prompt version, effort, uncached / cache-write / cache-read / output tokens, cost and latency.
 
 | Task | Model | Why |
 |---|---|---|
 | Exception checks, landed cost, scoring | **No LLM** (deterministic code) | Cheapest and fully auditable; these don't need language understanding |
-| Quote extraction (first pass) | `claude-sonnet-5` | Structured extraction from short documents; about 60% cheaper per token than Opus |
-| Quote extraction (escalation) | `claude-opus-5` | Used only when the first pass fails automatic checks: a citation not found in the document, low confidence on a required field, no price, or a schema/refusal failure. Refusal fallback enabled |
+| Quote extraction (first pass) | `claude-sonnet-5`, effort `low`, prompt cached | 4 docs × 3 trials (2026-09-15): same 100% accuracy as Opus and as default effort, at $0.0116/doc and 7.8 s p50 vs $0.0306 and 10.0 s for Opus. The system prompt + output schema (~2,800 tokens) are prompt-cached; 84% of input tokens are cache reads at 0.1× price |
+| Quote extraction (escalation) | `claude-opus-5`, default effort | Used only when the first pass fails automatic checks: a citation not found in the document, low confidence on a required field, no price, an unreadable date/country, or a schema/refusal failure. Fired 1 time in 12 low-effort runs (a non-verbatim citation on the bilingual quote) and corrected it. Refusal fallback enabled |
 | Award memo draft | `claude-sonnet-5`, effort `medium` | Writes from already-verified data; the template memo remains available with no model |
 | Demo test-quote writing | `claude-sonnet-5`, effort `low` | Formatting work only: code chooses every commercial term, and the writer must reproduce them exactly (checked, with one retry) |
 | *Not used:* `claude-haiku-4-5` | | The remaining LLM work involves bilingual quotes, European number formats, and tier selection, where errors are expensive. Revisit only if `--compare` shows it matches accuracy |
@@ -42,7 +42,7 @@ API or network errors do **not** trigger escalation; only quality failures do. I
 | Decision made on unverified data | Comparison and memo are **locked** until every quote is approved or rejected; high-severity flags require explicit acknowledgement |
 | AI output treated as final | Memo is labelled *DRAFT - requires buyer verification* and is built only from approved fields |
 | Override without rationale | Awarding to a supplier other than the top-scored bid requires a written justification |
-| Silent changes to behaviour | Prompts are versioned files; the prompt version and model are recorded on every run; evals re-run before changing prompts |
+| Silent changes to behaviour | Prompts are versioned files; prompt version, model and effort are recorded on every run; evals re-run before changing prompts, models or effort, and every eval run is appended to `evals/history.jsonl` with the git SHA; CI re-runs the recorded-extraction eval on every push |
 | Cost overrun | Per-run token and cost logging; API spend on the scorecard; demo mode makes no API calls except AI test-quote generation, which is capped per UTC day for visitors without the live passcode (`BIDLENS_PUBLIC_DAILY_GENERATIONS`, default 10); spend limit set in the Anthropic Console |
 | Demo results that look staged | "Generate a fresh scenario" builds unseen quotes: code randomizes terms as a hidden answer key, Claude writes the documents, extraction reads them blind, and the app shows the field-by-field score including misses |
 | Auditability | Append-only audit log of event creation, extraction, edits, approvals, rejections, and awards with actor and timestamp |
