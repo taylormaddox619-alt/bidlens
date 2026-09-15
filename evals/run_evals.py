@@ -21,43 +21,16 @@ sys.path.insert(0, str(ROOT))
 
 from bidlens import config, rules  # noqa: E402
 from bidlens.extract import demo_extraction, live_extraction, routed_extraction  # noqa: E402
+from bidlens.grading import compare_fields  # noqa: E402
 from bidlens.ingest import extract_text, quote_in_document  # noqa: E402
 from bidlens.schemas import FIELD_SPECS, RFQ, flat_values  # noqa: E402
 from bidlens.credentials import get_secret  # noqa: E402
 
-# Free-text fields are graded leniently: the expected text must appear in the extraction or vice versa.
-LENIENT = {"supplier_name", "payment_terms", "incoterm_location"}
-
-
-def values_match(kind: str, expected, actual) -> bool:
-    if expected is None or actual is None:
-        return expected is None and actual is None
-    if kind == "number":
-        return abs(float(expected) - float(actual)) <= max(0.005 * abs(float(expected)), 0.01)
-    norm = lambda s: " ".join(str(s).lower().replace(".", "").replace(",", "").split())  # noqa: E731
-    return norm(expected) == norm(actual)
-
-
 def grade(truth: dict, quote: dict, text: str) -> dict:
-    results, cites_ok, cites_total = [], 0, 0
-    for name, _, kind, _ in FIELD_SPECS:
-        exp = truth[name]["value"]
-        got = (quote.get(name) or {}).get("value")
-        if name == "prepayment_percent":  # 0 and "not stated" both mean no prepayment
-            exp, got = exp or None, got or None
-        if name in LENIENT and exp is not None and got is not None:
-            ok = str(exp).lower() in str(got).lower() or str(got).lower() in str(exp).lower()
-        else:
-            ok = values_match(kind, exp, got)
-        results.append({"field": name, "expected": exp, "actual": got, "correct": ok})
-        src = (quote.get(name) or {}).get("source_quote")
-        if got is not None:
-            cites_total += 1
-            cites_ok += bool(src and quote_in_document(src, text))
-    exp_tiers = sorted((t["min_qty"], t["unit_price"]) for t in truth["price_tiers"])
-    got_tiers = sorted((t["min_qty"], t["unit_price"]) for t in quote.get("price_tiers") or [])
-    results.append({"field": "price_tiers", "expected": exp_tiers, "actual": got_tiers, "correct": exp_tiers == got_tiers})
-    return {"fields": results, "cites_ok": cites_ok, "cites_total": cites_total}
+    cites = [(quote.get(name) or {}).get("source_quote") for name, *_ in FIELD_SPECS
+             if (quote.get(name) or {}).get("value") is not None]
+    return {"fields": compare_fields(truth, quote), "cites_total": len(cites),
+            "cites_ok": sum(bool(src and quote_in_document(src, text)) for src in cites)}
 
 
 def evaluate(name: str, extractor, truths: list[dict], rfq: RFQ) -> dict:
