@@ -38,6 +38,20 @@ def test_display_names():
     assert ui.short_name("Sierra Madre Castings S.A. de C.V.") == "Sierra Madre Castings"
 
 
+def test_every_generator_suffix_is_trimmed():
+    """The demo generator's suffix list and the display trimmer must not drift apart."""
+    from bidlens.generate import COUNTRIES
+    for code, (suffix, *_) in COUNTRIES.items():
+        assert ui.short_name(f"Ironvale Castings {suffix}") == "Ironvale Castings", (code, suffix)
+
+
+def test_common_words_are_not_mistaken_for_suffixes():
+    assert ui.short_name("Heartland Ag") == "Heartland Ag"
+    assert ui.short_name("Great Plains Ag Inc.") == "Great Plains Ag"
+    assert ui.short_name("Nordic Pumps A/S") == "Nordic Pumps"
+    assert ui.short_name("Delta Precision B.V.") == "Delta Precision"
+
+
 def test_every_page_key_maps_to_a_real_page():
     from bidlens.config import ROOT
     for path in ui.PAGES.values():

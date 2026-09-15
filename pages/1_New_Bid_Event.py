@@ -144,7 +144,7 @@ m2.metric("Required lead time", f"{rfq.required_lead_time_weeks:g} wks")
 m3.metric("Standard terms", f"Net {rfq.standard_payment_days}")
 m4.metric("Evaluation date", rfq.evaluation_date.isoformat())
 
-ui.workflow_stepper(event_id, "setup")
+_, award = ui.workflow_stepper(event_id, "setup", quotes)
 
 if not quotes:
     st.info("**👉 Your next step: add the supplier quotes you received for this RFQ.** Upload PDF or Excel quote "
@@ -217,7 +217,7 @@ if quotes:
     ])
     st.dataframe(table, hide_index=True, width="stretch")
     st.caption(ui.severity_legend())
-    ui.next_step_button(event_id, "setup", key="next_bottom_setup")
+    ui.next_step_button(quotes, award, "setup", key="next_bottom_setup")
 
 st.markdown("#### Add quotes")
 uploads = st.file_uploader("Upload supplier quotes (PDF, Excel, text)", type=list(SUPPORTED_TYPES),

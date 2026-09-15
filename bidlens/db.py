@@ -246,6 +246,17 @@ def get_award(event_id: str) -> dict | None:
     return rows[0] if rows else None
 
 
+def withdraw_award(event_id: str, actor: str, reason: str) -> dict | None:
+    """Remove a recorded award (e.g. a quote was reopened, so the decision no longer stands)."""
+    award = get_award(event_id)
+    if award is None:
+        return None
+    cursor().execute("DELETE FROM awards WHERE event_id = ?", [event_id])
+    set_event_status(event_id, "open")
+    audit("award_withdrawn", actor, event_id, award["quote_id"], {"supplier": award["supplier"], "reason": reason})
+    return award
+
+
 # --- Scorecard -------------------------------------------------------------------
 def scorecard_data() -> dict:
     return {

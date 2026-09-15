@@ -112,8 +112,14 @@ def md(text: str) -> str:
     return text.replace("$", "\\$")
 
 
+# Legal-form suffixes trimmed from supplier names for display. Every suffix the demo generator uses
+# (generate.COUNTRIES) must be here; a test enforces it. "AG" is deliberately absent: as a bare word
+# it is a common part of real names ("Heartland Ag").
+LEGAL_SUFFIXES = ("Co., Ltd.", "Pvt. Ltd.", "GmbH", "Inc.", "S.A. de C.V.", "S.r.l.", "S.p.A.", "LLC",
+                  "Ltd.", "Corp.", "S.A.", "B.V.", "A/S", "Pty Ltd", "Sp. z o.o.")
 _LEGAL_SUFFIX = re.compile(
-    r",?\s+(co\.,?\s*ltd\.?|pvt\.?\s*ltd\.?|gmbh|ag|inc\.?|s\.a\. de c\.v\.|s\.r\.l\.?|s\.p\.a\.?|llc|ltd\.?|corp\.?)$",
+    r",?\s+(" + "|".join(sorted((re.escape(s).replace(r"\.", r"\.?").replace(r"\ ", r"\s*") for s in LEGAL_SUFFIXES),
+                               key=len, reverse=True)) + r")$",
     re.IGNORECASE)
 
 
@@ -171,9 +177,9 @@ def next_step(quotes: list[dict], award: dict | None) -> tuple[str, str]:
     return "scorecard", "View the AI Scorecard →"
 
 
-def next_step_button(event_id: str, current: str, key: str) -> None:
+def next_step_button(quotes: list[dict], award: dict | None, current: str, key: str) -> None:
     """Primary button to the next step; hidden when the next step is the page you're already on."""
-    page, text = next_step(db.list_quotes(event_id), db.get_award(event_id))
+    page, text = next_step(quotes, award)
     if page == current:
         return
     if st.button(text, type="primary", key=key):
@@ -183,9 +189,14 @@ def next_step_button(event_id: str, current: str, key: str) -> None:
             pass
 
 
-def workflow_stepper(event_id: str, current: str) -> None:
-    """Where am I, what's done, and what's next, for the active bid event."""
-    quotes, award = db.list_quotes(event_id), db.get_award(event_id)
+def workflow_stepper(event_id: str, current: str, quotes: list[dict] | None = None) -> tuple[list[dict], dict | None]:
+    """Where am I, what's done, and what's next, for the active bid event.
+
+    Returns (quotes, award) so pages can reuse them instead of querying again.
+    """
+    if quotes is None:
+        quotes = db.list_quotes(event_id)
+    award = db.get_award(event_id)
     p = event_progress(quotes, award)
     high_risk = sum(risk_level(q["flags"]) == "high" for q in quotes if q["status"] not in REVIEWED)
     steps = [
@@ -204,7 +215,8 @@ def workflow_stepper(event_id: str, current: str) -> None:
             icon = "✅" if done else "👉" if key == current else "⬜"
             col.markdown(f"{icon} **{title}**" if key == current else f"{icon} {title}")
             col.caption(status)
-        next_step_button(event_id, current, key=f"next_top_{current}")
+        next_step_button(quotes, award, current, key=f"next_top_{current}")
+    return quotes, award
 
 
 def render_flags(flags: list[dict]) -> None:

@@ -26,7 +26,7 @@ quotes = db.list_quotes(event_id)
 pending = [q for q in quotes if q["status"] not in ui.REVIEWED]
 approved = [q for q in quotes if q["status"] == "approved"]
 
-ui.workflow_stepper(event_id, "compare")
+ui.workflow_stepper(event_id, "compare", quotes)
 
 # Guardrail: the comparison only uses buyer-verified data.
 if not quotes:
@@ -233,4 +233,4 @@ if st.button("Record award decision", type="primary", disabled=choice != best["s
     }, ctx["actor"])
     st.rerun()
 if award:
-    ui.next_step_button(event_id, "compare", key="next_bottom_compare")
+    ui.next_step_button(quotes, award, "compare", key="next_bottom_compare")

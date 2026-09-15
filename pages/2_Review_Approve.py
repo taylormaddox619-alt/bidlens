@@ -33,18 +33,18 @@ if not quotes:
     ui.nav_link("pages/1_New_Bid_Event.py", "Go to New Bid Event", "🆕")
     st.stop()
 
-ui.workflow_stepper(event_id, "review")
+_, award = ui.workflow_stepper(event_id, "review", quotes)
 
 if "review_flash" in st.session_state:
     st.success(st.session_state.pop("review_flash"))
 
 done = sum(q["status"] in ui.REVIEWED for q in quotes)
-if done == len(quotes):
-    award = db.get_award(event_id)
-    st.success("**✅ All quotes are reviewed"
-               + (f" and the award is recorded ({ui.short_name(award['supplier'])}).** " if award
-                  else ".** Use the **Next** button above to compare bids and record the award. ")
-               + "You can still reopen any quote below.")
+if done == len(quotes) and award:
+    st.success(f"**✅ All quotes are reviewed and the award is recorded ({ui.short_name(award['supplier'])}).** "
+               "Reopening a quote below withdraws the award, so it can be re-decided on the Comparison page.")
+elif done == len(quotes):
+    st.success("**✅ All quotes are reviewed.** Use the **Next** button above to compare bids and record the award. "
+               "You can still reopen any quote below.")
 
 with st.expander("📋 How to review a quote", expanded=done == 0):
     st.markdown(
@@ -198,8 +198,16 @@ with left:
     if locked:
         st.info(f"This quote is **{q['status']}** by {q['reviewed_by']}"
                 + (f": {q['review_note']}" if q["review_note"] else "."))
+        if award:
+            st.warning(f"This event is already awarded to **{ui.short_name(award['supplier'])}**. Reopening this "
+                       "quote withdraws that award; you will need to record the decision again.")
         if st.button("Reopen for review"):
             db.set_quote_status(q["id"], "extracted", ctx["actor"], event_id, "Reopened")
+            withdrawn = db.withdraw_award(event_id, ctx["actor"], f"quote reopened: {ui.quote_supplier(q)}")
+            if withdrawn:
+                st.session_state["review_flash"] = (
+                    f"Reopened **{ui.short_name(ui.quote_supplier(q))}** and withdrew the award to "
+                    f"**{ui.short_name(withdrawn['supplier'])}**. Re-record the decision after review.")
             st.rerun()
     else:
         c1, c2 = st.columns(2)
@@ -271,4 +279,4 @@ with right:
     st.caption("Highlighted text = evidence cited by the extraction.")
 
 st.divider()
-ui.next_step_button(event_id, "review", key="next_bottom_review")
+ui.next_step_button(quotes, award, "review", key="next_bottom_review")
