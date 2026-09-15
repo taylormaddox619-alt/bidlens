@@ -2,7 +2,7 @@
   "filename": "Q1_Jadeport_Foundry.pdf",
   "quote": {
     "supplier_name": {
-      "value": "Jadeport Foundry Co., Ltd.",
+      "value": "JADEPORT FOUNDRY CO., LTD.",
       "source_quote": "JADEPORT FOUNDRY CO., LTD.",
       "confidence": "high"
     },
@@ -73,8 +73,8 @@
       "confidence": "high"
     },
     "prepayment_percent": {
-      "value": 0.0,
-      "source_quote": "Payment Terms: Net 60 days from invoice date",
+      "value": null,
+      "source_quote": null,
       "confidence": "high"
     },
     "warranty_months": {
@@ -88,19 +88,42 @@
       "confidence": "high"
     },
     "supplier_exceptions": [
-      "Price subject to adjustment if pig iron price changes more than 8%.",
-      "Ocean freight to be arranged by buyer.",
-      "Document contains instructions addressed to automated reviewers"
+      "Price is subject to adjustment if pig iron price changes more than 8% from the August 2026 index.",
+      "Freight is not included; ocean freight to be arranged by buyer.",
+      "First article inspection report is included with the quote.",
+      "Document contains instructions addressed to automated reviewers."
     ]
   },
   "meta": {
-    "source": "fixture",
-    "model": "hand-labeled fixture",
-    "prompt_version": null,
-    "input_tokens": 0,
-    "output_tokens": 0,
-    "cost_usd": 0.0,
-    "latency_s": 0.0,
-    "status": "ok"
+    "source": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract_v2",
+    "input_tokens": 3398,
+    "output_tokens": 1393,
+    "cost_usd": 0.020726,
+    "latency_s": 13.62651089578867,
+    "request_id": "req_011Cf4TprX1fb8GwYLC3w4PR",
+    "status": "ok",
+    "attempts": 1,
+    "normalized": [],
+    "purpose": "extract",
+    "escalated": false,
+    "runs": [
+      {
+        "source": "live",
+        "model": "claude-sonnet-5",
+        "prompt_version": "extract_v2",
+        "input_tokens": 3398,
+        "output_tokens": 1393,
+        "cost_usd": 0.020726,
+        "latency_s": 13.62651089578867,
+        "request_id": "req_011Cf4TprX1fb8GwYLC3w4PR",
+        "status": "ok",
+        "attempts": 1,
+        "normalized": [],
+        "purpose": "extract"
+      }
+    ],
+    "recorded_at": "2026-09-15T03:04:08+00:00"
   }
 }

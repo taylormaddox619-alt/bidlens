@@ -10,7 +10,7 @@
 | **Process scope** | RFQ response analysis → bid comparison → draft award memo. Out of scope: supplier selection without buyer approval, contract execution, PO creation |
 | **Users** | Buyers and category managers |
 | **Data sources** | Supplier quote documents (PDF/XLSX) uploaded by the buyer; reference tables for tariff rates, freight lanes, FX (`data/reference/`) |
-| **AI components** | Anthropic Claude, routed by task (see *Model routing* below): extraction (prompt `extract_v1`) and optional memo drafting (prompt `memo_v1`) |
+| **AI components** | Anthropic Claude, routed by task (see *Model routing* below): extraction (prompt `extract_v2`, followed by deterministic normalization) and optional memo drafting (prompt `memo_v1`) |
 | **Deterministic components** | Business rules (`bidlens/rules.py`), landed-cost model (`costing.py`), scoring (`scoring.py`) |
 | **Data store** | DuckDB (demo); production target is Snowflake with role-based access |
 | **Access** | Demo: public read-only demo mode; live mode gated by API key + passcode |

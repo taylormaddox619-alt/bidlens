@@ -1,0 +1,570 @@
+{
+  "config": "routed: claude-sonnet-5 \u2192 claude-opus-5",
+  "run_at": "2026-09-15 03:07 UTC",
+  "source": "live Claude call",
+  "model": "claude-sonnet-5",
+  "prompt_version": "extract_v2",
+  "documents": 4,
+  "field_accuracy": 1.0,
+  "citation_rate": 1.0,
+  "flag_recall": 1.0,
+  "flag_precision": 1.0,
+  "escalation_rate": 0.0,
+  "total_cost_usd": 0.08280199999999999,
+  "cost_per_document_usd": 0.020700499999999997,
+  "avg_latency_s": 11.431616347283125,
+  "documents_detail": [
+    {
+      "filename": "Q1_Jadeport_Foundry.pdf",
+      "model": "claude-sonnet-5",
+      "escalated": false,
+      "cost_usd": 0.020916,
+      "latency_s": 12.16411679983139,
+      "status": "ok",
+      "fields": [
+        {
+          "field": "supplier_name",
+          "expected": "Jadeport Foundry Co., Ltd.",
+          "actual": "JADEPORT FOUNDRY CO., LTD.",
+          "correct": true
+        },
+        {
+          "field": "quote_number",
+          "expected": "JPF-Q-26-0917",
+          "actual": "JPF-Q-26-0917",
+          "correct": true
+        },
+        {
+          "field": "quote_date",
+          "expected": "2026-08-24",
+          "actual": "2026-08-24",
+          "correct": true
+        },
+        {
+          "field": "valid_until",
+          "expected": "2026-11-30",
+          "actual": "2026-11-30",
+          "correct": true
+        },
+        {
+          "field": "currency",
+          "expected": "USD",
+          "actual": "USD",
+          "correct": true
+        },
+        {
+          "field": "unit_price",
+          "expected": 172.0,
+          "actual": 172.0,
+          "correct": true
+        },
+        {
+          "field": "tooling_cost",
+          "expected": 6000.0,
+          "actual": 6000.0,
+          "correct": true
+        },
+        {
+          "field": "freight_cost",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "incoterm",
+          "expected": "FOB",
+          "actual": "FOB",
+          "correct": true
+        },
+        {
+          "field": "incoterm_location",
+          "expected": "Ningbo",
+          "actual": "Ningbo",
+          "correct": true
+        },
+        {
+          "field": "country_of_origin",
+          "expected": "CN",
+          "actual": "CN",
+          "correct": true
+        },
+        {
+          "field": "lead_time_weeks",
+          "expected": 10.0,
+          "actual": 10.0,
+          "correct": true
+        },
+        {
+          "field": "payment_terms",
+          "expected": "Net 60 days from invoice date",
+          "actual": "Net 60 days from invoice date",
+          "correct": true
+        },
+        {
+          "field": "payment_terms_days",
+          "expected": 60.0,
+          "actual": 60.0,
+          "correct": true
+        },
+        {
+          "field": "prepayment_percent",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "warranty_months",
+          "expected": 12.0,
+          "actual": 12.0,
+          "correct": true
+        },
+        {
+          "field": "moq",
+          "expected": 300.0,
+          "actual": 300.0,
+          "correct": true
+        },
+        {
+          "field": "price_tiers",
+          "expected": [],
+          "actual": [],
+          "correct": true
+        }
+      ],
+      "cites_ok": 15,
+      "cites_total": 15,
+      "flags_found": [
+        "FREIGHT_ESTIMATED",
+        "SUPPLIER_EXCEPTIONS",
+        "SUSPICIOUS_INSTRUCTION",
+        "TARIFF_EXPOSURE"
+      ],
+      "flags_expected": [
+        "FREIGHT_ESTIMATED",
+        "SUPPLIER_EXCEPTIONS",
+        "SUSPICIOUS_INSTRUCTION",
+        "TARIFF_EXPOSURE"
+      ]
+    },
+    {
+      "filename": "Q2_Kessler_Vogt.pdf",
+      "model": "claude-sonnet-5",
+      "escalated": false,
+      "cost_usd": 0.02257,
+      "latency_s": 11.991382099688053,
+      "status": "ok",
+      "fields": [
+        {
+          "field": "supplier_name",
+          "expected": "Kessler & Vogt Gusstechnik GmbH",
+          "actual": "Kessler & Vogt Gusstechnik GmbH",
+          "correct": true
+        },
+        {
+          "field": "quote_number",
+          "expected": "KV-2026-4471",
+          "actual": "KV-2026-4471",
+          "correct": true
+        },
+        {
+          "field": "quote_date",
+          "expected": "2026-08-27",
+          "actual": "2026-08-27",
+          "correct": true
+        },
+        {
+          "field": "valid_until",
+          "expected": "2026-12-15",
+          "actual": "2026-12-15",
+          "correct": true
+        },
+        {
+          "field": "currency",
+          "expected": "EUR",
+          "actual": "EUR",
+          "correct": true
+        },
+        {
+          "field": "unit_price",
+          "expected": 168.0,
+          "actual": 168.0,
+          "correct": true
+        },
+        {
+          "field": "tooling_cost",
+          "expected": 2500.0,
+          "actual": 2500.0,
+          "correct": true
+        },
+        {
+          "field": "freight_cost",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "incoterm",
+          "expected": "EXW",
+          "actual": "EXW",
+          "correct": true
+        },
+        {
+          "field": "incoterm_location",
+          "expected": "Stuttgart",
+          "actual": "Stuttgart",
+          "correct": true
+        },
+        {
+          "field": "country_of_origin",
+          "expected": "DE",
+          "actual": "DE",
+          "correct": true
+        },
+        {
+          "field": "lead_time_weeks",
+          "expected": 11.0,
+          "actual": 11.0,
+          "correct": true
+        },
+        {
+          "field": "payment_terms",
+          "expected": "30% deposit with order, balance net 30 days",
+          "actual": "30% deposit with order, balance net 30 days",
+          "correct": true
+        },
+        {
+          "field": "payment_terms_days",
+          "expected": 30.0,
+          "actual": 30.0,
+          "correct": true
+        },
+        {
+          "field": "prepayment_percent",
+          "expected": 30.0,
+          "actual": 30.0,
+          "correct": true
+        },
+        {
+          "field": "warranty_months",
+          "expected": 24.0,
+          "actual": 24.0,
+          "correct": true
+        },
+        {
+          "field": "moq",
+          "expected": 100.0,
+          "actual": 100.0,
+          "correct": true
+        },
+        {
+          "field": "price_tiers",
+          "expected": [],
+          "actual": [],
+          "correct": true
+        }
+      ],
+      "cites_ok": 16,
+      "cites_total": 16,
+      "flags_found": [
+        "CURRENCY_MISMATCH",
+        "FREIGHT_ESTIMATED",
+        "PAYMENT_TERMS_BELOW_STANDARD",
+        "PREPAYMENT_REQUIRED",
+        "SUPPLIER_EXCEPTIONS",
+        "TARIFF_EXPOSURE"
+      ],
+      "flags_expected": [
+        "CURRENCY_MISMATCH",
+        "FREIGHT_ESTIMATED",
+        "PAYMENT_TERMS_BELOW_STANDARD",
+        "PREPAYMENT_REQUIRED",
+        "SUPPLIER_EXCEPTIONS",
+        "TARIFF_EXPOSURE"
+      ]
+    },
+    {
+      "filename": "Q3_Lakeshore_Cast.pdf",
+      "model": "claude-sonnet-5",
+      "escalated": false,
+      "cost_usd": 0.019172,
+      "latency_s": 9.922524891793728,
+      "status": "ok",
+      "fields": [
+        {
+          "field": "supplier_name",
+          "expected": "Lakeshore Cast Components, Inc.",
+          "actual": "LAKESHORE CAST COMPONENTS, INC.",
+          "correct": true
+        },
+        {
+          "field": "quote_number",
+          "expected": "LCC-58213",
+          "actual": "LCC-58213",
+          "correct": true
+        },
+        {
+          "field": "quote_date",
+          "expected": "2026-07-15",
+          "actual": "2026-07-15",
+          "correct": true
+        },
+        {
+          "field": "valid_until",
+          "expected": "2026-08-31",
+          "actual": "2026-08-31",
+          "correct": true
+        },
+        {
+          "field": "currency",
+          "expected": "USD",
+          "actual": "USD",
+          "correct": true
+        },
+        {
+          "field": "unit_price",
+          "expected": 214.0,
+          "actual": 214.0,
+          "correct": true
+        },
+        {
+          "field": "tooling_cost",
+          "expected": 0.0,
+          "actual": 0.0,
+          "correct": true
+        },
+        {
+          "field": "freight_cost",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "incoterm",
+          "expected": "DAP",
+          "actual": "DAP",
+          "correct": true
+        },
+        {
+          "field": "incoterm_location",
+          "expected": "Charlotte, NC",
+          "actual": "Charlotte, NC",
+          "correct": true
+        },
+        {
+          "field": "country_of_origin",
+          "expected": "US",
+          "actual": "US",
+          "correct": true
+        },
+        {
+          "field": "lead_time_weeks",
+          "expected": 16.0,
+          "actual": 16.0,
+          "correct": true
+        },
+        {
+          "field": "payment_terms",
+          "expected": "Net 60",
+          "actual": "Net 60",
+          "correct": true
+        },
+        {
+          "field": "payment_terms_days",
+          "expected": 60.0,
+          "actual": 60.0,
+          "correct": true
+        },
+        {
+          "field": "prepayment_percent",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "warranty_months",
+          "expected": 18.0,
+          "actual": 18.0,
+          "correct": true
+        },
+        {
+          "field": "moq",
+          "expected": 250.0,
+          "actual": 250.0,
+          "correct": true
+        },
+        {
+          "field": "price_tiers",
+          "expected": [],
+          "actual": [],
+          "correct": true
+        }
+      ],
+      "cites_ok": 15,
+      "cites_total": 15,
+      "flags_found": [
+        "LEAD_TIME_EXCEEDS",
+        "QUOTE_EXPIRED",
+        "SUPPLIER_EXCEPTIONS"
+      ],
+      "flags_expected": [
+        "LEAD_TIME_EXCEEDS",
+        "QUOTE_EXPIRED",
+        "SUPPLIER_EXCEPTIONS"
+      ]
+    },
+    {
+      "filename": "Q4_Sierra_Madre_Castings.xlsx",
+      "model": "claude-sonnet-5",
+      "escalated": false,
+      "cost_usd": 0.020144,
+      "latency_s": 11.648441597819328,
+      "status": "ok",
+      "fields": [
+        {
+          "field": "supplier_name",
+          "expected": "Sierra Madre Castings S.A. de C.V.",
+          "actual": "Sierra Madre Castings S.A. de C.V.",
+          "correct": true
+        },
+        {
+          "field": "quote_number",
+          "expected": "SMC-2026-311",
+          "actual": "SMC-2026-311",
+          "correct": true
+        },
+        {
+          "field": "quote_date",
+          "expected": "2026-08-30",
+          "actual": "2026-08-30",
+          "correct": true
+        },
+        {
+          "field": "valid_until",
+          "expected": "2026-10-31",
+          "actual": "2026-10-31",
+          "correct": true
+        },
+        {
+          "field": "currency",
+          "expected": "USD",
+          "actual": "USD",
+          "correct": true
+        },
+        {
+          "field": "unit_price",
+          "expected": 194.0,
+          "actual": 194.0,
+          "correct": true
+        },
+        {
+          "field": "tooling_cost",
+          "expected": 3000.0,
+          "actual": 3000.0,
+          "correct": true
+        },
+        {
+          "field": "freight_cost",
+          "expected": 3250.0,
+          "actual": 3250.0,
+          "correct": true
+        },
+        {
+          "field": "incoterm",
+          "expected": "FCA",
+          "actual": "FCA",
+          "correct": true
+        },
+        {
+          "field": "incoterm_location",
+          "expected": "Monterrey",
+          "actual": "Monterrey",
+          "correct": true
+        },
+        {
+          "field": "country_of_origin",
+          "expected": "MX",
+          "actual": "MX",
+          "correct": true
+        },
+        {
+          "field": "lead_time_weeks",
+          "expected": 8.0,
+          "actual": 8.0,
+          "correct": true
+        },
+        {
+          "field": "payment_terms",
+          "expected": "Net 45",
+          "actual": "Net 45",
+          "correct": true
+        },
+        {
+          "field": "payment_terms_days",
+          "expected": 45.0,
+          "actual": 45.0,
+          "correct": true
+        },
+        {
+          "field": "prepayment_percent",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "warranty_months",
+          "expected": null,
+          "actual": null,
+          "correct": true
+        },
+        {
+          "field": "moq",
+          "expected": 250.0,
+          "actual": 250.0,
+          "correct": true
+        },
+        {
+          "field": "price_tiers",
+          "expected": [
+            [
+              1,
+              205.0
+            ],
+            [
+              250,
+              199.0
+            ],
+            [
+              500,
+              194.0
+            ]
+          ],
+          "actual": [
+            [
+              1,
+              205.0
+            ],
+            [
+              250,
+              199.0
+            ],
+            [
+              500,
+              194.0
+            ]
+          ],
+          "correct": true
+        }
+      ],
+      "cites_ok": 15,
+      "cites_total": 15,
+      "flags_found": [
+        "MISSING_FIELD",
+        "PAYMENT_TERMS_BELOW_STANDARD"
+      ],
+      "flags_expected": [
+        "MISSING_FIELD",
+        "PAYMENT_TERMS_BELOW_STANDARD"
+      ]
+    }
+  ]
+}

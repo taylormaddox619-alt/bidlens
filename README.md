@@ -43,7 +43,9 @@ PDF / XLSX ──► ingest.py ──► extract.py ──► rules.py ──►
 - **Guardrails:** verbatim citations checked against the source, null-not-guess instructions, untrusted-document framing plus a deterministic injection detector, mandatory human approval, a locked comparison and a DRAFT-labelled memo.
 - **Data:** DuckDB with all SQL isolated in `bidlens/db.py`, so it can move to Snowflake.
 - **UI:** Streamlit multipage app.
-- **Quality:** pytest suite (rules, costing, scoring, review edits, ingest, demo cache) and an evaluation harness that scores extraction against labelled ground truth.
+- **Quality:** pytest suite (rules, costing, scoring, review edits, normalization, routing, ingest, demo cache) and an evaluation harness that scores extraction against labelled ground truth. [EVAL_LOG.md](evals/EVAL_LOG.md) shows how eval runs found two real defects (a prompt contradiction and an unparsed expiry date that hid an expired quote) and how they were fixed.
+
+**Latest eval (4 labelled quotes):** routed extraction matched Opus-only at 100% field accuracy and 100% exception recall, for **$0.021 vs $0.043 per quote**. See [model_comparison.md](evals/model_comparison.md).
 
 ## Run locally
 

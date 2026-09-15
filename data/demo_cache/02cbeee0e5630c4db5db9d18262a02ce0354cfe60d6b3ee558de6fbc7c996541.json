@@ -2,7 +2,7 @@
   "filename": "Q3_Lakeshore_Cast.pdf",
   "quote": {
     "supplier_name": {
-      "value": "Lakeshore Cast Components, Inc.",
+      "value": "LAKESHORE CAST COMPONENTS, INC.",
       "source_quote": "LAKESHORE CAST COMPONENTS, INC.",
       "confidence": "high"
     },
@@ -73,8 +73,8 @@
       "confidence": "high"
     },
     "prepayment_percent": {
-      "value": 0.0,
-      "source_quote": "Terms: Net 60",
+      "value": null,
+      "source_quote": null,
       "confidence": "high"
     },
     "warranty_months": {
@@ -88,17 +88,40 @@
       "confidence": "high"
     },
     "supplier_exceptions": [
-      "Quote assumes customer-supplied gauges for final inspection."
+      "Quote assumes customer-supplied gauges for final inspection.",
+      "Freight is stated as included in the unit price, so no separate freight cost is quoted."
     ]
   },
   "meta": {
-    "source": "fixture",
-    "model": "hand-labeled fixture",
-    "prompt_version": null,
-    "input_tokens": 0,
-    "output_tokens": 0,
-    "cost_usd": 0.0,
-    "latency_s": 0.0,
-    "status": "ok"
+    "source": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract_v2",
+    "input_tokens": 3216,
+    "output_tokens": 1309,
+    "cost_usd": 0.019522,
+    "latency_s": 10.835643395781517,
+    "request_id": "req_011Cf4TskN1wwZVyMhttpKDe",
+    "status": "ok",
+    "attempts": 1,
+    "normalized": [],
+    "purpose": "extract",
+    "escalated": false,
+    "runs": [
+      {
+        "source": "live",
+        "model": "claude-sonnet-5",
+        "prompt_version": "extract_v2",
+        "input_tokens": 3216,
+        "output_tokens": 1309,
+        "cost_usd": 0.019522,
+        "latency_s": 10.835643395781517,
+        "request_id": "req_011Cf4TskN1wwZVyMhttpKDe",
+        "status": "ok",
+        "attempts": 1,
+        "normalized": [],
+        "purpose": "extract"
+      }
+    ],
+    "recorded_at": "2026-09-15T03:04:44+00:00"
   }
 }
