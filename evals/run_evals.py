@@ -43,6 +43,8 @@ def grade(truth: dict, quote: dict, text: str) -> dict:
     for name, _, kind, _ in FIELD_SPECS:
         exp = truth[name]["value"]
         got = (quote.get(name) or {}).get("value")
+        if name == "prepayment_percent":  # 0 and "not stated" both mean no prepayment
+            exp, got = exp or None, got or None
         if name in LENIENT and exp is not None and got is not None:
             ok = str(exp).lower() in str(got).lower() or str(got).lower() in str(exp).lower()
         else:

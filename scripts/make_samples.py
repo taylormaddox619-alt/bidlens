@@ -210,7 +210,7 @@ GROUND_TRUTH = {
             "lead_time_weeks": T(10.0, "Lead Time: 10 weeks after receipt of PO and approved first article"),
             "payment_terms": T("Net 60 days from invoice date", "Payment Terms: Net 60 days from invoice date"),
             "payment_terms_days": T(60.0, "Payment Terms: Net 60 days from invoice date"),
-            "prepayment_percent": T(0.0, "Payment Terms: Net 60 days from invoice date"),
+            "prepayment_percent": T(None),
             "warranty_months": T(12.0, "Warranty: 12 months from date of shipment"),
             "moq": T(300.0, "Minimum Order Quantity: 300 pcs"),
             "supplier_exceptions": [
@@ -266,7 +266,7 @@ GROUND_TRUTH = {
             "lead_time_weeks": T(16.0, "Lead Time: 16 weeks ARO"),
             "payment_terms": T("Net 60", "Terms: Net 60"),
             "payment_terms_days": T(60.0, "Terms: Net 60"),
-            "prepayment_percent": T(0.0, "Terms: Net 60"),
+            "prepayment_percent": T(None),
             "warranty_months": T(18.0, "Warranty: 18 months against defects in material and workmanship"),
             "moq": T(250.0, "Minimum order: 250 pieces"),
             "supplier_exceptions": ["Quote assumes customer-supplied gauges for final inspection."],
@@ -295,7 +295,7 @@ GROUND_TRUTH = {
             "lead_time_weeks": T(8.0, "Lead Time | 8 weeks"),
             "payment_terms": T("Net 45", "Payment Terms | Net 45"),
             "payment_terms_days": T(45.0, "Payment Terms | Net 45"),
-            "prepayment_percent": T(0.0, "Payment Terms | Net 45"),
+            "prepayment_percent": T(None),
             "warranty_months": T(None),
             "moq": T(250.0, "Minimum Order Qty | 250"),
             "supplier_exceptions": [],
@@ -329,7 +329,7 @@ def main() -> None:
         (GROUND_TRUTH_DIR / f"{path.stem}.json").write_text(json.dumps(truth, indent=2), encoding="utf-8")
 
         cache_path = DEMO_CACHE_DIR / f"{text_sha(text)}.json"
-        if cache_path.exists() and json.loads(cache_path.read_text(encoding="utf-8"))["meta"]["source"] == "claude":
+        if cache_path.exists() and json.loads(cache_path.read_text(encoding="utf-8"))["meta"].get("source") == "claude":
             print(f"  kept recorded Claude extraction for {filename}")
         else:
             fixture = {"filename": filename, "quote": quote,

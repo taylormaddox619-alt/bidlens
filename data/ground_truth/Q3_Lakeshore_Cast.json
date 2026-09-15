@@ -73,8 +73,8 @@
       "confidence": "high"
     },
     "prepayment_percent": {
-      "value": 0.0,
-      "source_quote": "Terms: Net 60",
+      "value": null,
+      "source_quote": null,
       "confidence": "high"
     },
     "warranty_months": {

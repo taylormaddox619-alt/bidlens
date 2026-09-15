@@ -92,8 +92,8 @@
       "confidence": "high"
     },
     "prepayment_percent": {
-      "value": 0.0,
-      "source_quote": "Payment Terms | Net 45",
+      "value": null,
+      "source_quote": null,
       "confidence": "high"
     },
     "warranty_months": {

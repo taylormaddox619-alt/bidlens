@@ -26,7 +26,7 @@ MODEL_ROUTES = {
     "extract_escalation": os.environ.get("BIDLENS_ESCALATION_MODEL", "claude-opus-5"),
     "memo": os.environ.get("BIDLENS_MEMO_MODEL", "claude-sonnet-5"),
 }
-EXTRACT_PROMPT_VERSION = "extract_v1"
+EXTRACT_PROMPT_VERSION = "extract_v2"  # v2: prepayment is null when not stated (v1 said 0, which cannot be cited)
 MEMO_PROMPT_VERSION = "memo_v1"
 # Server-side refusal fallback: if the model declines, the API re-runs the request
 # on Anthropic's recommended fallback model inside the same call. Only sent to

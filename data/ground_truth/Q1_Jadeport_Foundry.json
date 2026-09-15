@@ -73,8 +73,8 @@
       "confidence": "high"
     },
     "prepayment_percent": {
-      "value": 0.0,
-      "source_quote": "Payment Terms: Net 60 days from invoice date",
+      "value": null,
+      "source_quote": null,
       "confidence": "high"
     },
     "warranty_months": {
