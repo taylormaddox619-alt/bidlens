@@ -9,6 +9,7 @@ the result escalates to a stronger model only when it fails automatic quality ch
 """
 
 import json
+import re
 import time
 
 import anthropic
@@ -16,6 +17,7 @@ from pydantic import ValidationError
 
 from . import config
 from .ingest import quote_in_document, text_sha
+from .normalize import is_iso_date, normalize_quote
 from .schemas import FIELD_SPECS, RFQ, Quote
 
 REQUIRED_FIELDS = {name for name, _, _, required in FIELD_SPECS if required}
@@ -54,7 +56,8 @@ def demo_extraction(text: str) -> tuple[dict | None, dict]:
     meta = dict(record["meta"])
     meta["recorded_source"] = meta.get("source")
     meta["source"] = "demo_cache"
-    return record["quote"], meta
+    quote, _ = normalize_quote(record["quote"])
+    return quote, meta
 
 
 def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
@@ -113,8 +116,9 @@ def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
             last_error = f"No structured output returned (attempt {attempt})."
             continue
 
-        meta.update(status="ok", latency_s=time.perf_counter() - start, attempts=attempt)
-        return response.parsed_output.model_dump(), meta
+        quote, changes = normalize_quote(response.parsed_output.model_dump())
+        meta.update(status="ok", latency_s=time.perf_counter() - start, attempts=attempt, normalized=changes)
+        return quote, meta
 
     meta.update(status="failed", error=last_error, error_kind=error_kind, latency_s=time.perf_counter() - start)
     return None, meta
@@ -138,6 +142,13 @@ def escalation_reasons(quote: dict | None, meta: dict, text: str) -> list[str]:
             reasons.append(f"price tier from {tier.get('min_qty')}: citation not found in document")
     if not (quote.get("unit_price") or {}).get("value") and not quote.get("price_tiers"):
         reasons.append("no price extracted")
+    # Values the rules can't interpret even after normalization would silently disable checks.
+    valid_until = (quote.get("valid_until") or {}).get("value")
+    if valid_until and not is_iso_date(valid_until):
+        reasons.append(f"valid_until: unreadable date '{valid_until}'")
+    origin = (quote.get("country_of_origin") or {}).get("value")
+    if origin and not re.fullmatch(r"[A-Z]{2}", str(origin)):
+        reasons.append(f"country_of_origin: not a country code '{origin}'")
     return reasons
 
 
