@@ -1,14 +1,13 @@
 """Record real Claude extractions of the sample quotes so demo mode replays genuine model output.
 
-Usage (PowerShell):
-  $env:ANTHROPIC_API_KEY = "sk-ant-..."
+Usage:
   python scripts/record_demo_cache.py
+  (reads ANTHROPIC_API_KEY from the environment or .streamlit/secrets.toml)
 
 Costs a few cents. Overwrites the hand-labeled fixtures in data/demo_cache/.
 """
 
 import json
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,13 +18,14 @@ sys.path.insert(0, str(ROOT))
 from bidlens import config  # noqa: E402
 from bidlens.extract import routed_extraction  # noqa: E402
 from bidlens.ingest import extract_text, text_sha  # noqa: E402
+from bidlens.credentials import get_secret  # noqa: E402
 from bidlens.schemas import RFQ  # noqa: E402
 
 
 def main() -> None:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = get_secret("ANTHROPIC_API_KEY")
     if not api_key:
-        sys.exit("Set ANTHROPIC_API_KEY first.")
+        sys.exit("No API key found. Add ANTHROPIC_API_KEY to .streamlit/secrets.toml or the environment.")
     rfq = RFQ.model_validate(json.loads((config.SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8")))
     total = 0.0
     for path in sorted(config.SAMPLES_DIR.iterdir()):

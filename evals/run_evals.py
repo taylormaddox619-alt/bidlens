@@ -12,7 +12,6 @@ Writes evals/results.json (read by the AI Scorecard page) and evals/report.md
 
 import argparse
 import json
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +23,7 @@ from bidlens import config, rules  # noqa: E402
 from bidlens.extract import demo_extraction, live_extraction, routed_extraction  # noqa: E402
 from bidlens.ingest import extract_text, quote_in_document  # noqa: E402
 from bidlens.schemas import FIELD_SPECS, RFQ, flat_values  # noqa: E402
+from bidlens.credentials import get_secret  # noqa: E402
 
 # Free-text fields are graded leniently: the expected text must appear in the extraction or vice versa.
 LENIENT = {"supplier_name", "payment_terms", "incoterm_location"}
@@ -173,9 +173,9 @@ def main() -> None:
     parser.add_argument("--prompt", default=config.EXTRACT_PROMPT_VERSION)
     args = parser.parse_args()
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = get_secret("ANTHROPIC_API_KEY")
     if not args.demo and not api_key:
-        sys.exit("ANTHROPIC_API_KEY is not set. Use --demo to evaluate recorded extractions.")
+        sys.exit("No API key found (environment or .streamlit/secrets.toml). Use --demo to evaluate recorded extractions.")
 
     rfq = RFQ.model_validate(json.loads((config.SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8")))
     truths = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(config.GROUND_TRUTH_DIR.glob("*.json"))]
