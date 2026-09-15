@@ -27,10 +27,19 @@ def load_prompt(version: str) -> str:
     return (config.PROMPTS_DIR / f"{version}.md").read_text(encoding="utf-8")
 
 
-def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+def cost_usd(model: str, input_tokens: int, output_tokens: int,
+             cache_write_tokens: int = 0, cache_read_tokens: int = 0) -> float:
+    """USD for one call. `input_tokens` is the uncached portion; cached tokens are priced separately."""
     # Unknown models are priced at the most expensive routed tier so spend is never understated.
     price_in, price_out = config.MODEL_PRICING.get(model, max(config.MODEL_PRICING.values()))
-    return (input_tokens * price_in + output_tokens * price_out) / 1_000_000
+    return (input_tokens * price_in + output_tokens * price_out
+            + cache_write_tokens * price_in * config.CACHE_WRITE_MULTIPLIER
+            + cache_read_tokens * price_in * config.CACHE_READ_MULTIPLIER) / 1_000_000
+
+
+def _system_blocks(prompt_version: str) -> list[dict]:
+    """The stable prefix (the prompt) is marked for caching; the document goes in the user turn."""
+    return [{"type": "text", "text": load_prompt(prompt_version), "cache_control": {"type": "ephemeral"}}]
 
 
 def fallback_kwargs(model: str) -> dict:
@@ -61,16 +70,20 @@ def demo_extraction(text: str) -> tuple[dict | None, dict]:
 
 
 def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
-                    prompt_version: str = config.EXTRACT_PROMPT_VERSION) -> tuple[dict | None, dict]:
+                    prompt_version: str = config.EXTRACT_PROMPT_VERSION,
+                    effort: str | None = None) -> tuple[dict | None, dict]:
     """One model, one retry on schema failure. Returns (quote_dict or None, run metadata).
 
     `error_kind` is "capability" when a stronger model might succeed (bad schema, truncation,
     refusal) and "infra" when it would not help (auth, rate limit, network).
+    `effort` (low | medium | high) bounds the model's reasoning; None leaves the model default.
     """
     client = anthropic.Anthropic(api_key=api_key)
-    system = load_prompt(prompt_version)
-    meta = {"source": "live", "model": model, "prompt_version": prompt_version,
-            "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "latency_s": 0.0}
+    system = _system_blocks(prompt_version)
+    meta = {"source": "live", "model": model, "prompt_version": prompt_version, "effort": effort,
+            "input_tokens": 0, "output_tokens": 0, "cache_write_tokens": 0, "cache_read_tokens": 0,
+            "cost_usd": 0.0, "latency_s": 0.0}
+    effort_kwargs = {"output_config": {"effort": effort}} if effort else {}
     start = time.perf_counter()
     last_error, error_kind = None, "capability"
 
@@ -82,6 +95,7 @@ def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
                 system=system,
                 messages=[{"role": "user", "content": _user_message(text, rfq)}],
                 output_format=Quote,
+                **effort_kwargs,
                 **fallback_kwargs(model),
             )
         except anthropic.AuthenticationError:
@@ -100,9 +114,15 @@ def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
             last_error = f"Output failed schema validation (attempt {attempt}): {e.error_count()} errors"
             continue
 
-        meta["input_tokens"] += response.usage.input_tokens
-        meta["output_tokens"] += response.usage.output_tokens
-        meta["cost_usd"] += cost_usd(response.model, response.usage.input_tokens, response.usage.output_tokens)
+        usage = response.usage
+        # usage.input_tokens is the uncached part only; cached prefix tokens are reported separately.
+        cache_write = getattr(usage, "cache_creation_input_tokens", None) or 0
+        cache_read = getattr(usage, "cache_read_input_tokens", None) or 0
+        meta["input_tokens"] += usage.input_tokens
+        meta["output_tokens"] += usage.output_tokens
+        meta["cache_write_tokens"] += cache_write
+        meta["cache_read_tokens"] += cache_read
+        meta["cost_usd"] += cost_usd(response.model, usage.input_tokens, usage.output_tokens, cache_write, cache_read)
         meta["model"] = response.model
         meta["request_id"] = response._request_id
 
@@ -152,22 +172,28 @@ def escalation_reasons(quote: dict | None, meta: dict, text: str) -> list[str]:
     return reasons
 
 
+TOTALED = ("input_tokens", "output_tokens", "cache_write_tokens", "cache_read_tokens", "cost_usd", "latency_s")
+
+
 def routed_extraction(text: str, rfq: RFQ, api_key: str,
                       prompt_version: str = config.EXTRACT_PROMPT_VERSION,
-                      routes: dict | None = None) -> tuple[dict | None, dict]:
+                      routes: dict | None = None, efforts: dict | None = None) -> tuple[dict | None, dict]:
     """First pass on the cheaper model; escalate to the stronger model only if the gate fails."""
     routes = routes or config.MODEL_ROUTES
-    quote, first = live_extraction(text, rfq, api_key, routes["extract"], prompt_version)
+    efforts = efforts if efforts is not None else config.EFFORT
+    quote, first = live_extraction(text, rfq, api_key, routes["extract"], prompt_version,
+                                   effort=efforts.get("extract"))
     first["purpose"] = "extract"
     reasons = escalation_reasons(quote, first, text)
 
     if not reasons or first.get("error_kind") == "infra" or routes["extract_escalation"] == routes["extract"]:
         return quote, {**first, "escalated": False, "runs": [first]}
 
-    better, second = live_extraction(text, rfq, api_key, routes["extract_escalation"], prompt_version)
+    better, second = live_extraction(text, rfq, api_key, routes["extract_escalation"], prompt_version,
+                                     effort=efforts.get("extract_escalation"))
     second["purpose"] = "extract_escalation"
     runs = [first, second]
-    totals = {k: sum(r.get(k, 0) for r in runs) for k in ("input_tokens", "output_tokens", "cost_usd", "latency_s")}
+    totals = {k: sum(r.get(k, 0) for r in runs) for k in TOTALED}
     meta = {"source": "live", "prompt_version": prompt_version, **totals, "runs": runs,
             "escalated": True, "escalation_reasons": reasons, "first_pass_model": first["model"]}
 

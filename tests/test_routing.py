@@ -11,7 +11,8 @@ ROUTES = {"extract": "cheap-model", "extract_escalation": "strong-model", "memo"
 
 def run_meta(model, cost, **extra):
     return {"source": "live", "model": model, "prompt_version": "extract_v1", "input_tokens": 1000,
-            "output_tokens": 500, "cost_usd": cost, "latency_s": 2.0, **extra}
+            "output_tokens": 500, "cache_write_tokens": 100, "cache_read_tokens": 0, "cost_usd": cost,
+            "latency_s": 2.0, **extra}
 
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def fake_models(monkeypatch):
     calls = []
 
     def install(responses):
-        def fake_live(text, rfq, api_key, model, prompt_version):
+        def fake_live(text, rfq, api_key, model, prompt_version, effort=None):
             calls.append(model)
             quote, extra = responses[model]
             status = {"status": "ok"} if quote else {"status": "failed"}
@@ -75,6 +76,7 @@ def test_routed_escalates_and_sums_cost(samples, rfq, fake_models):
     assert calls == ["cheap-model", "strong-model"]
     assert meta["escalated"] and meta["model"] == "strong-model"
     assert meta["cost_usd"] == pytest.approx(0.06)
+    assert meta["cache_write_tokens"] == 200  # summed across both passes
     assert [r["purpose"] for r in meta["runs"]] == ["extract", "extract_escalation"]
     assert quote["unit_price"]["source_quote"] == "Unit Price: $214.00 each"
 

@@ -29,6 +29,12 @@ MODEL_ROUTES = {
     "generate": os.environ.get("BIDLENS_GENERATE_MODEL", "claude-sonnet-5"),
 }
 EXTRACT_PROMPT_VERSION = "extract_v2"  # v2: prepayment is null when not stated (v1 said 0, which cannot be cited)
+# Reasoning effort per extraction route (low | medium | high). None sends nothing, i.e. the
+# model default. Change only on the strength of `python evals/run_evals.py --compare --trials 3`.
+EFFORT = {
+    "extract": os.environ.get("BIDLENS_EXTRACT_EFFORT") or None,
+    "extract_escalation": os.environ.get("BIDLENS_ESCALATION_EFFORT") or None,
+}
 MEMO_PROMPT_VERSION = "memo_v1"
 GENERATE_PROMPT_VERSION = "generate_v1"
 
@@ -49,6 +55,10 @@ MODEL_PRICING = {
     "claude-sonnet-5": (2.00, 10.00),
     "claude-haiku-4-5": (1.00, 5.00),
 }
+# Prompt caching: the extraction system prompt is sent with cache_control, so repeat calls
+# read it from cache. Cache writes cost 1.25x the input price, cache reads 0.1x.
+CACHE_WRITE_MULTIPLIER = 1.25
+CACHE_READ_MULTIPLIER = 0.10
 
 # --- Business assumptions (documented on the Governance page) --------------
 COST_OF_CAPITAL = 0.08            # annual rate used to value payment-term differences
