@@ -1,10 +1,11 @@
 import json
+import random
 from datetime import date
 
 import pandas as pd
 import streamlit as st
 
-from bidlens import db, ui, workflow
+from bidlens import config, db, ui, workflow
 from bidlens.config import SAMPLES_DIR
 from bidlens.ingest import SUPPORTED_TYPES
 
@@ -15,33 +16,81 @@ st.title("🆕 New Bid Event")
 st.caption("Create an RFQ, then upload the supplier quotes you received.")
 
 
+def generate_random_rfq() -> dict:
+    from bidlens.generate import random_rfq
+    return random_rfq(random.Random(), date.today())
+
+
 def sample_files() -> list[tuple[str, bytes]]:
     return [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]
 
 
 def run_documents(event_id: str, files: list[tuple[str, bytes]]) -> None:
     _, rfq = ui.load_rfq(event_id)
-    results = []
-    progress = st.progress(0.0, text="Extracting…")
-    for i, (name, data) in enumerate(files, start=1):
-        progress.progress((i - 1) / len(files), text=f"Extracting {name}…")
-        results.append(workflow.process_document(event_id, rfq, name, data, ctx["mode"], ctx["api_key"], ctx["actor"]))
-    workflow.refresh_flags(event_id, rfq)
-    progress.progress(1.0, text="Done")
+    with st.spinner(f"Extracting {len(files)} document(s)…"):
+        results = workflow.process_documents(event_id, rfq, files, ctx["mode"], ctx["api_key"], ctx["actor"])
+        workflow.refresh_flags(event_id, rfq)
     st.session_state["last_results"] = results
 
 
-with st.expander("⚡ Quick start: load the demo scenario", expanded=not db.list_events()):
-    st.markdown(
-        "Creates **RFQ-2026-0142**: 500 cast-iron compressor air-end housings, 12-week lead time requirement, "
-        "Net 60 standard terms. It loads **4 fictional supplier quotes** (3 PDFs, 1 Excel), each with a built-in problem to catch."
-    )
-    if st.button("Load demo scenario", type="primary"):
-        rfq = json.loads((SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8"))
-        event_id = db.create_event(rfq, ctx["actor"])
-        st.session_state["event_id"] = event_id
-        run_documents(event_id, sample_files())
-        st.rerun()
+# --- AI-generated test quotes ------------------------------------------------------------------
+privileged = ctx["mode"] == "live"  # passcode holders are not subject to the public daily cap
+used_today = db.public_generations_today()
+remaining = max(config.PUBLIC_DAILY_GENERATIONS - used_today, 0)
+can_generate = bool(ctx["api_key"]) and (privileged or remaining > 0)
+
+
+def generation_note() -> str:
+    if not ctx["api_key"]:
+        return "Unavailable: no Anthropic API key configured for this deployment."
+    if privileged:
+        return "Live mode: not counted against the public daily limit."
+    if remaining == 0:
+        return f"The public demo's daily limit ({config.PUBLIC_DAILY_GENERATIONS}) is used up. Try again tomorrow (UTC)."
+    return f"{remaining} of {config.PUBLIC_DAILY_GENERATIONS} public generations left today · about 1 minute · uses Claude."
+
+
+def run_generation(event_id: str) -> None:
+    _, rfq = ui.load_rfq(event_id)
+    with st.status("Generating fresh supplier quotes…", expanded=True) as status:
+        st.write(f"🎲 Code is randomly choosing {config.QUOTES_PER_GENERATION} suppliers' prices, countries, "
+                 "currencies, terms and problems (kept as a hidden answer key).")
+        st.write("✍️ Claude is writing each supplier's quote document, then a separate call reads them blind…")
+        outcome = workflow.generate_test_quotes(event_id, rfq, ctx["api_key"], ctx["actor"], privileged)
+        status.update(label=f"Generated and extracted {len(outcome['results'])} quotes "
+                            f"(${outcome['cost_usd']:.2f})", state="complete", expanded=False)
+    st.session_state["last_results"] = outcome["results"]
+    st.session_state["generation_scores"] = outcome["scores"]
+
+
+with st.expander("⚡ Quick start", expanded=not db.list_events()):
+    left, right = st.columns(2, gap="large")
+    with left:
+        st.markdown("**Guided demo**")
+        st.markdown(
+            "Creates **RFQ-2026-0142**: 500 cast-iron compressor air-end housings, 12-week lead time, Net 60 "
+            "standard terms, with **4 fictional supplier quotes** (3 PDFs, 1 Excel). Each has a built-in problem to catch."
+        )
+        if st.button("Load demo scenario", type="primary"):
+            rfq = json.loads((SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8"))
+            event_id = db.create_event(rfq, ctx["actor"])
+            st.session_state["event_id"] = event_id
+            run_documents(event_id, sample_files())
+            st.rerun()
+    with right:
+        st.markdown("**Fresh AI-generated scenario**")
+        st.markdown(
+            "A new random RFQ with suppliers nobody has seen before. Code picks their terms at random and keeps them "
+            "as a **hidden answer key**. Claude writes the quote documents, then the normal pipeline reads them blind "
+            "and is **scored against the answer key**, misses included."
+        )
+        if st.button("🎲 Generate a fresh scenario", disabled=not can_generate):
+            new_rfq = generate_random_rfq()
+            event_id = db.create_event(new_rfq, ctx["actor"])
+            st.session_state["event_id"] = event_id
+            run_generation(event_id)
+            st.rerun()
+        st.caption(generation_note())
 
 with st.expander("➕ Create a custom bid event"):
     with st.form("new_event"):
@@ -100,16 +149,23 @@ if not quotes:
     st.info("**Next step: add the supplier quotes you received for this RFQ.** Upload PDF or Excel quote files "
             "below, then click **Extract**.")
     if ctx["mode"] == "demo":
-        left, right = st.columns([3, 2])
-        left.warning("You're in **Demo mode**, which can only read the 4 bundled sample quotes. To analyze your own "
-                     "quote files, switch to **Live** in the sidebar (passcode required).")
-        with right:
-            st.markdown("**No quote files handy?**")
-            if st.button("Try this event with the 4 sample supplier quotes"):
-                run_documents(event_id, sample_files())
-                st.rerun()
-            st.caption("The samples quote a compressor housing, but the rules will check them against *this* "
-                       "event's quantity, lead time and payment terms.")
+        st.warning("You're in **Demo mode**, which can only read the 4 bundled sample quotes. To analyze your own "
+                   "quote files, switch to **Live** in the sidebar (passcode required).")
+    left, right = st.columns(2, gap="large")
+    with left:
+        st.markdown("**No quote files handy? Generate fresh ones**")
+        if st.button("🎲 Generate supplier quotes for this RFQ with AI", disabled=not can_generate):
+            run_generation(event_id)
+            st.rerun()
+        st.caption("Suppliers quote *this* event's item and quantity, with random terms scored against a hidden "
+                   "answer key. " + generation_note())
+    with right:
+        st.markdown("**Or use the bundled samples**")
+        if st.button("Try this event with the 4 sample supplier quotes"):
+            run_documents(event_id, sample_files())
+            st.rerun()
+        st.caption("The samples quote a compressor housing, but the rules check them against *this* event's "
+                   "quantity, lead time and payment terms.")
 elif pending:
     st.info(f"**Next step: review and approve {len(pending)} quote(s).**")
     ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
@@ -122,6 +178,23 @@ uploads = st.file_uploader("Upload supplier quotes" + (" (more)" if quotes else 
 if uploads and st.button(f"Extract {len(uploads)} document(s)", type="primary"):
     run_documents(event_id, [(u.name, u.getvalue()) for u in uploads])
     st.rerun()
+
+scores = st.session_state.pop("generation_scores", None)
+if scores:
+    graded = [s for s in scores if s["total"]]
+    correct, total = sum(s["correct"] for s in graded), sum(s["total"] for s in graded)
+    with st.container(border=True):
+        st.markdown(f"#### 🎲 Answer-key check: {correct} of {total} fields extracted correctly "
+                    f"({correct / total:.0%})" if total else "#### 🎲 Answer-key check")
+        st.caption("Each quote was written by Claude from terms that code chose at random. The extraction never saw "
+                   "those terms; this compares what it read with the hidden answer key.")
+        st.dataframe(pd.DataFrame([{
+            "Document": s["filename"], "Style": s["style"],
+            "Fields correct": f"{s['correct']}/{s['total']}" if s["total"] else s.get("error") or s["status"],
+            "Misses": ", ".join(s["misses"]) or "none",
+            "Not graded (writer left out)": ", ".join(s["omitted_by_writer"]) or "",
+        } for s in scores]), hide_index=True, width="stretch")
+        st.caption("Open any quote on **Review & Approve** to see its full answer key next to the extraction.")
 
 for r in st.session_state.pop("last_results", []):
     if r["status"] == "failed":

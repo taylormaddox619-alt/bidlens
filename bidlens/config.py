@@ -25,9 +25,17 @@ MODEL_ROUTES = {
     "extract": os.environ.get("BIDLENS_EXTRACT_MODEL", "claude-sonnet-5"),
     "extract_escalation": os.environ.get("BIDLENS_ESCALATION_MODEL", "claude-opus-5"),
     "memo": os.environ.get("BIDLENS_MEMO_MODEL", "claude-sonnet-5"),
+    # Writing test documents from facts that code already chose: formatting work, low effort.
+    "generate": os.environ.get("BIDLENS_GENERATE_MODEL", "claude-sonnet-5"),
 }
 EXTRACT_PROMPT_VERSION = "extract_v2"  # v2: prepayment is null when not stated (v1 said 0, which cannot be cited)
 MEMO_PROMPT_VERSION = "memo_v1"
+GENERATE_PROMPT_VERSION = "generate_v1"
+
+# --- AI-generated test quotes ------------------------------------------------
+QUOTES_PER_GENERATION = 4
+# Visitors without the live passcode share this many generations per UTC day (~$0.15-0.20 each).
+PUBLIC_DAILY_GENERATIONS = int(os.environ.get("BIDLENS_PUBLIC_DAILY_GENERATIONS", "10"))
 # Server-side refusal fallback: if the model declines, the API re-runs the request
 # on Anthropic's recommended fallback model inside the same call. Only sent to
 # models documented to accept it.

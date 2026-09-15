@@ -41,6 +41,13 @@ CREATE TABLE IF NOT EXISTS awards (
     naive_supplier VARCHAR, naive_landed_total_usd DOUBLE, savings_vs_naive_usd DOUBLE,
     followed_recommendation BOOLEAN, justification VARCHAR, decided_by VARCHAR, decided_at TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS answer_keys (
+    quote_id VARCHAR PRIMARY KEY, event_id VARCHAR, truth_json VARCHAR, omitted_json VARCHAR, style VARCHAR
+);
+CREATE TABLE IF NOT EXISTS generation_log (
+    id VARCHAR PRIMARY KEY, ts TIMESTAMP, event_id VARCHAR, actor VARCHAR, privileged BOOLEAN,
+    documents INTEGER, cost_usd DOUBLE
+);
 CREATE TABLE IF NOT EXISTS audit_log (
     id VARCHAR PRIMARY KEY, ts TIMESTAMP, event_id VARCHAR, quote_id VARCHAR, actor VARCHAR,
     action VARCHAR, detail VARCHAR
@@ -175,6 +182,7 @@ def delete_event(event_id: str, actor: str) -> None:
     quote_ids = [r["id"] for r in _rows("SELECT id FROM quotes WHERE event_id = ?", [event_id])]
     for qid in quote_ids:
         cur.execute("DELETE FROM field_edits WHERE quote_id = ?", [qid])
+        cur.execute("DELETE FROM answer_keys WHERE quote_id = ?", [qid])
     cur.execute("DELETE FROM quotes WHERE event_id = ?", [event_id])
     cur.execute("DELETE FROM awards WHERE event_id = ?", [event_id])
     cur.execute("DELETE FROM bid_events WHERE id = ?", [event_id])
@@ -190,6 +198,33 @@ def log_llm_run(meta: dict, purpose: str, event_id=None, quote_id=None) -> None:
          meta.get("cost_usd", 0.0), meta.get("latency_s", 0.0), meta.get("status"),
          meta.get("error"), meta.get("request_id")],
     )
+
+
+# --- AI-generated test quotes ------------------------------------------------------
+def save_answer_key(quote_id: str, event_id: str, truth: dict, omitted: list, style: str) -> None:
+    cursor().execute("INSERT INTO answer_keys VALUES (?, ?, ?, ?, ?)",
+                     [quote_id, event_id, _json(truth), _json(omitted), style])
+
+
+def get_answer_key(quote_id: str) -> dict | None:
+    rows = _rows("SELECT * FROM answer_keys WHERE quote_id = ?", [quote_id])
+    if not rows:
+        return None
+    return {"truth": json.loads(rows[0]["truth_json"]), "omitted": json.loads(rows[0]["omitted_json"]),
+            "style": rows[0]["style"]}
+
+
+def log_generation(event_id: str, actor: str, privileged: bool, documents: int, cost: float) -> None:
+    cursor().execute("INSERT INTO generation_log VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     [_new_id(), _now(), event_id, actor, privileged, documents, cost])
+    audit("quotes_generated", actor, event_id, detail={"documents": documents, "cost_usd": cost})
+
+
+def public_generations_today() -> int:
+    today = _now().replace(hour=0, minute=0, second=0, microsecond=0)
+    cur = cursor()
+    cur.execute("SELECT count(*) FROM generation_log WHERE ts >= ? AND NOT privileged", [today])
+    return cur.fetchone()[0]
 
 
 # --- Awards --------------------------------------------------------------------

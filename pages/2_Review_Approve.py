@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from bidlens import db, review, ui, workflow
+from bidlens.grading import compare_fields
 from bidlens.ingest import quote_in_document
 from bidlens.rules import label
 from bidlens.schemas import FIELD_SPECS
@@ -73,6 +74,22 @@ if flags:
         st.markdown(ui.md(f"{ui.SEVERITY_ICON[f['severity']]} **{label(f['field'])}**: {f['message']}"))
 else:
     st.success("No exceptions flagged.")
+
+answer_key = db.get_answer_key(quote_id)
+if answer_key and q["extraction"]:
+    fields = compare_fields(answer_key["truth"], q["extraction"], skip={"payment_terms", *answer_key["omitted"]})
+    correct = sum(f["correct"] for f in fields)
+    with st.expander(f"🎲 AI-generated test quote · answer key check: {correct}/{len(fields)} fields correct"):
+        st.caption("Code chose these terms at random, and Claude wrote the document from them. The extraction "
+                   "below never saw this answer key. Comparison uses the AI's original extraction, before any "
+                   f"buyer edits. Style: {answer_key['style']}.")
+        st.dataframe(pd.DataFrame([{
+            "": "✅" if f["correct"] else "❌", "Field": f["label"],
+            "AI extracted": review.display_value(f["actual"]) if f["field"] != "price_tiers" else str(f["actual"]),
+            "Answer key": review.display_value(f["expected"]) if f["field"] != "price_tiers" else str(f["expected"]),
+        } for f in fields]), hide_index=True, width="stretch")
+        if answer_key["omitted"]:
+            st.caption("Not graded because the writer left them out of the document: " + ", ".join(answer_key["omitted"]))
 
 left, right = st.columns([3, 2], gap="large")
 

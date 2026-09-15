@@ -28,6 +28,16 @@ RFQ for 500 cast-iron compressor air-end housings, with four fictional suppliers
 
 **Result:** picking the lowest unit price would have cost **$25,531 more** than the best landed-cost bid.
 
+### Not a staged demo: generate fresh scenarios
+
+**New Bid Event → 🎲 Generate a fresh scenario** creates a random RFQ with four suppliers nobody has seen:
+
+1. **Code** randomly picks each supplier's country, currency, prices or price breaks, Incoterm, freight, lead time, payment terms, warranty and validity. Those terms are the **hidden answer key**.
+2. **Claude** writes each supplier's quote as a PDF or Excel sheet in varied styles (formal letter, terse form, email, bilingual). It must reproduce every term exactly; this is checked automatically.
+3. The **normal extraction pipeline reads the documents blind**, and the app scores the result field by field against the answer key, **misses included**.
+
+On a first live run, it generated four quotes (Canada, China, Germany, Italy) in 34 seconds for $0.17, and extraction got 68 of 68 fields right. Public visitors get a daily cap; the passcode removes it.
+
 ## Architecture
 
 ```
