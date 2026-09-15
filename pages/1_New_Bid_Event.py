@@ -5,6 +5,10 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
+from reload_guard import ensure_fresh
+
+ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.py)
+
 from bidlens import config, db, ui, workflow
 from bidlens.config import SAMPLES_DIR
 from bidlens.ingest import SUPPORTED_TYPES

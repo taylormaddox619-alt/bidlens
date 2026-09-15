@@ -4,6 +4,10 @@ import re
 import pandas as pd
 import streamlit as st
 
+from reload_guard import ensure_fresh
+
+ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.py)
+
 from bidlens import db, review, ui, workflow
 from bidlens.grading import compare_fields
 from bidlens.ingest import quote_in_document

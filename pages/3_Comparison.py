@@ -2,6 +2,10 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from reload_guard import ensure_fresh
+
+ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.py)
+
 from bidlens import db, memo, ui, workflow
 from bidlens.reference import fx_as_of
 from bidlens.rules import label
