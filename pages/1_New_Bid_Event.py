@@ -15,6 +15,10 @@ st.title("🆕 New Bid Event")
 st.caption("Create an RFQ, then upload the supplier quotes you received.")
 
 
+def sample_files() -> list[tuple[str, bytes]]:
+    return [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]
+
+
 def run_documents(event_id: str, files: list[tuple[str, bytes]]) -> None:
     _, rfq = ui.load_rfq(event_id)
     results = []
@@ -36,11 +40,10 @@ with st.expander("⚡ Quick start: load the demo scenario", expanded=not db.list
         rfq = json.loads((SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8"))
         event_id = db.create_event(rfq, ctx["actor"])
         st.session_state["event_id"] = event_id
-        files = [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]
-        run_documents(event_id, files)
+        run_documents(event_id, sample_files())
         st.rerun()
 
-with st.expander("Create a custom bid event"):
+with st.expander("➕ Create a custom bid event"):
     with st.form("new_event"):
         c1, c2 = st.columns(2)
         name = c1.text_input("Event name", placeholder="RFQ-2026-0150 Motor mounts")
@@ -53,7 +56,7 @@ with st.expander("Create a custom bid event"):
         currency = c6.selectbox("RFQ currency", ["USD"])
         destination = c7.text_input("Ship-to", value="Charlotte, NC distribution center")
         eval_date = c8.date_input("Evaluation date", value=date.today())
-        if st.form_submit_button("Create event"):
+        if st.form_submit_button("Create event", type="primary"):
             if not name or not item:
                 st.error("Event name and item are required.")
             else:
@@ -64,6 +67,7 @@ with st.expander("Create a custom bid event"):
                     ctx["actor"],
                 )
                 st.session_state["event_id"] = event_id
+                st.session_state["flash"] = f"Created **{name}**. It's now the active bid event (see the sidebar)."
                 st.rerun()
 
 event_id = st.session_state.get("event_id") or ctx["event_id"]
@@ -71,25 +75,57 @@ if not event_id or not db.get_event(event_id):
     st.info("Load the demo scenario or create an event to continue.")
     st.stop()
 
+if "flash" in st.session_state:
+    st.success(st.session_state.pop("flash"))
+
 event, rfq = ui.load_rfq(event_id)
+quotes = db.list_quotes(event_id)
+pending = [q for q in quotes if q["status"] not in ("approved", "rejected")]
+
+st.divider()
 st.subheader(event["name"])
+st.caption(f"Item: {rfq.item} · Ship-to: {rfq.destination}")
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Quantity", f"{rfq.quantity:,}")
 m2.metric("Required lead time", f"{rfq.required_lead_time_weeks:g} wks")
 m3.metric("Standard terms", f"Net {rfq.standard_payment_days}")
 m4.metric("Evaluation date", rfq.evaluation_date.isoformat())
-st.caption(f"Item: {rfq.item} · Ship-to: {rfq.destination}")
 
-uploads = st.file_uploader("Upload supplier quotes", type=list(SUPPORTED_TYPES), accept_multiple_files=True)
-if ctx["mode"] == "demo":
-    st.caption("Demo mode only processes the bundled sample quotes. Other files need Live mode and an API key.")
+# --- Progress + next step ---------------------------------------------------------------
+steps = [("1. Upload quotes", bool(quotes)), ("2. Review & approve", bool(quotes) and not pending),
+         ("3. Compare & award", db.get_award(event_id) is not None)]
+st.markdown("  →  ".join(f"✅ {label}" if done else f"⬜ {label}" for label, done in steps))
+
+if not quotes:
+    st.info("**Next step: add the supplier quotes you received for this RFQ.** Upload PDF or Excel quote files "
+            "below, then click **Extract**.")
+    if ctx["mode"] == "demo":
+        left, right = st.columns([3, 2])
+        left.warning("You're in **Demo mode**, which can only read the 4 bundled sample quotes. To analyze your own "
+                     "quote files, switch to **Live** in the sidebar (passcode required).")
+        with right:
+            st.markdown("**No quote files handy?**")
+            if st.button("Try this event with the 4 sample supplier quotes"):
+                run_documents(event_id, sample_files())
+                st.rerun()
+            st.caption("The samples quote a compressor housing, but the rules will check them against *this* "
+                       "event's quantity, lead time and payment terms.")
+elif pending:
+    st.info(f"**Next step: review and approve {len(pending)} quote(s).**")
+    ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
+else:
+    st.info("**Next step: all quotes are reviewed. Compare the bids and record the award.**")
+    ui.nav_link("pages/3_Comparison.py", "Go to Comparison", "⚖️")
+
+uploads = st.file_uploader("Upload supplier quotes" + (" (more)" if quotes else ""),
+                           type=list(SUPPORTED_TYPES), accept_multiple_files=True)
 if uploads and st.button(f"Extract {len(uploads)} document(s)", type="primary"):
     run_documents(event_id, [(u.name, u.getvalue()) for u in uploads])
     st.rerun()
 
 for r in st.session_state.pop("last_results", []):
     if r["status"] == "failed":
-        st.error(f"{r['filename']}: {r['error']}. The quote can be entered manually on the Review page.")
+        st.error(f"{r['filename']}: {r['error']} The quote can be entered manually on the Review page.")
     else:
         src = {"fixture": "recorded (hand-labeled)", "claude": "recorded Claude run", "live": "live Claude call"}
         route = ""
@@ -98,7 +134,6 @@ for r in st.session_state.pop("last_results", []):
         st.success(ui.md(f"{r['filename']}: extracted ({src.get(r['source'], r['source'])}{route}, "
                          f"${r['cost_usd']:.4f})"))
 
-quotes = db.list_quotes(event_id)
 if quotes:
     st.markdown("#### Quotes in this event")
     table = pd.DataFrame([
@@ -112,7 +147,6 @@ if quotes:
         for q in quotes
     ])
     st.dataframe(table, hide_index=True, width="stretch")
-    ui.nav_link("pages/2_Review_Approve.py", "Next: review and approve", "➡️")
 
 with st.expander("Danger zone"):
     if st.button("Delete this bid event"):
