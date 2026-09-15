@@ -38,7 +38,8 @@ PDF / XLSX ──► ingest.py ──► extract.py ──► rules.py ──►
                                    └──────────────► db.py (DuckDB: events, quotes, edits, runs, awards, audit log)
 ```
 
-- **LLM:** Anthropic Claude (`claude-opus-5`) via schema-constrained structured outputs (Pydantic), with server-side refusal fallback. Prompts are versioned files in `bidlens/prompts/`.
+- **LLM:** Anthropic Claude via schema-constrained structured outputs (Pydantic). Prompts are versioned files in `bidlens/prompts/`.
+- **Cost-aware model routing:** extraction runs on `claude-sonnet-5` and escalates to `claude-opus-5` only when the output fails automatic checks (citation not in document, low confidence on a required field, no price, schema failure). Memos use Sonnet at medium effort. Rules, costing and scoring use no LLM at all. `python evals/run_evals.py --compare` measures routed vs. each model alone on accuracy, cost and latency.
 - **Guardrails:** verbatim citations checked against the source, null-not-guess instructions, untrusted-document framing plus a deterministic injection detector, mandatory human approval, a locked comparison and a DRAFT-labelled memo.
 - **Data:** DuckDB with all SQL isolated in `bidlens/db.py`, so it can move to Snowflake.
 - **UI:** Streamlit multipage app.
@@ -65,6 +66,7 @@ BIDLENS_LIVE_PASSCODE = "choose-a-passcode"   # optional: gate live mode on a pu
 ```bash
 pytest                                  # unit tests
 python evals/run_evals.py               # live extraction accuracy vs ground truth -> evals/report.md
+python evals/run_evals.py --compare     # routed vs. Sonnet-only vs. Opus-only -> evals/model_comparison.md
 python evals/run_evals.py --demo        # pipeline + rules check on recorded extractions (no API cost)
 python scripts/record_demo_cache.py     # record real Claude extractions for demo mode
 python scripts/make_samples.py          # regenerate the synthetic quotes and ground truth

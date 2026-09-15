@@ -10,12 +10,26 @@
 | **Process scope** | RFQ response analysis → bid comparison → draft award memo. Out of scope: supplier selection without buyer approval, contract execution, PO creation |
 | **Users** | Buyers and category managers |
 | **Data sources** | Supplier quote documents (PDF/XLSX) uploaded by the buyer; reference tables for tariff rates, freight lanes, FX (`data/reference/`) |
-| **AI components** | Anthropic Claude (`claude-opus-5`) for extraction (prompt `extract_v1`) and optional memo drafting (prompt `memo_v1`); server-side refusal fallback enabled |
+| **AI components** | Anthropic Claude, routed by task (see *Model routing* below): extraction (prompt `extract_v1`) and optional memo drafting (prompt `memo_v1`) |
 | **Deterministic components** | Business rules (`bidlens/rules.py`), landed-cost model (`costing.py`), scoring (`scoring.py`) |
 | **Data store** | DuckDB (demo); production target is Snowflake with role-based access |
 | **Access** | Demo: public read-only demo mode; live mode gated by API key + passcode |
 | **Risk level** | **Medium**: influences sourcing decisions and handles confidential commercial data; mitigated by mandatory human approval |
 | **Dependencies** | Anthropic API, Streamlit, pdfplumber, openpyxl, DuckDB |
+
+## Model routing
+
+Each task runs on the cheapest model expected to do it reliably. Routing is configurable (`BIDLENS_EXTRACT_MODEL`, `BIDLENS_ESCALATION_MODEL`, `BIDLENS_MEMO_MODEL`) and must be confirmed with `python evals/run_evals.py --compare` before any change.
+
+| Task | Model | Why |
+|---|---|---|
+| Exception checks, landed cost, scoring | **No LLM** (deterministic code) | Cheapest and fully auditable; these don't need language understanding |
+| Quote extraction (first pass) | `claude-sonnet-5` | Structured extraction from short documents; about 60% cheaper per token than Opus |
+| Quote extraction (escalation) | `claude-opus-5` | Used only when the first pass fails automatic checks: a citation not found in the document, low confidence on a required field, no price, or a schema/refusal failure. Refusal fallback enabled |
+| Award memo draft | `claude-sonnet-5`, effort `medium` | Writes from already-verified data; the template memo remains available with no model |
+| *Not used:* `claude-haiku-4-5` | | The remaining LLM work involves bilingual quotes, European number formats, and tier selection, where errors are expensive. Revisit only if `--compare` shows it matches accuracy |
+
+API or network errors do **not** trigger escalation; only quality failures do. If escalation itself fails, the first-pass result is kept and its weak fields are flagged for the buyer.
 
 ## Controls
 

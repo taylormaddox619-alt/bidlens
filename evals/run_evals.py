@@ -1,11 +1,13 @@
 """Evaluate extraction accuracy and exception detection against labeled ground truth.
 
 Usage:
-  python evals/run_evals.py            # live: calls Claude for every sample (needs ANTHROPIC_API_KEY)
-  python evals/run_evals.py --demo     # replay recorded extractions (checks the pipeline + rules, no cost)
-  python evals/run_evals.py --prompt extract_v2 --model claude-sonnet-5   # compare a prompt/model variant
+  python evals/run_evals.py                 # production routing (cheap first pass, escalate on failed checks)
+  python evals/run_evals.py --compare       # routed vs. each model alone: accuracy, cost, latency side by side
+  python evals/run_evals.py --model claude-haiku-4-5    # a single model, no escalation
+  python evals/run_evals.py --demo          # replay recorded extractions (checks the pipeline + rules, no cost)
 
-Writes evals/results.json (read by the AI Scorecard page) and evals/report.md.
+Writes evals/results.json (read by the AI Scorecard page) and evals/report.md
+(--compare also writes evals/model_comparison.md).
 """
 
 import argparse
@@ -19,9 +21,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from bidlens import config, rules  # noqa: E402
-from bidlens.extract import demo_extraction, live_extraction  # noqa: E402
+from bidlens.extract import demo_extraction, live_extraction, routed_extraction  # noqa: E402
 from bidlens.ingest import extract_text, quote_in_document  # noqa: E402
 from bidlens.schemas import FIELD_SPECS, RFQ, flat_values  # noqa: E402
+
+# Free-text fields are graded leniently: the expected text must appear in the extraction or vice versa.
+LENIENT = {"supplier_name", "payment_terms", "incoterm_location"}
 
 
 def values_match(kind: str, expected, actual) -> bool:
@@ -31,10 +36,6 @@ def values_match(kind: str, expected, actual) -> bool:
         return abs(float(expected) - float(actual)) <= max(0.005 * abs(float(expected)), 0.01)
     norm = lambda s: " ".join(str(s).lower().replace(".", "").replace(",", "").split())  # noqa: E731
     return norm(expected) == norm(actual)
-
-
-# Free-text fields are graded leniently: the expected text must appear in the extraction or vice versa.
-LENIENT = {"supplier_name", "payment_terms", "incoterm_location"}
 
 
 def grade(truth: dict, quote: dict, text: str) -> dict:
@@ -57,94 +58,79 @@ def grade(truth: dict, quote: dict, text: str) -> dict:
     return {"fields": results, "cites_ok": cites_ok, "cites_total": cites_total}
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--demo", action="store_true", help="use recorded extractions instead of calling Claude")
-    parser.add_argument("--model", default=config.DEFAULT_MODEL)
-    parser.add_argument("--prompt", default=config.EXTRACT_PROMPT_VERSION)
-    args = parser.parse_args()
-
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not args.demo and not api_key:
-        sys.exit("ANTHROPIC_API_KEY is not set. Use --demo to evaluate recorded extractions.")
-
-    rfq = RFQ.model_validate(json.loads((config.SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8")))
-    truths = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(config.GROUND_TRUTH_DIR.glob("*.json"))]
-
-    docs, extractions = [], {}
+def evaluate(name: str, extractor, truths: list[dict], rfq: RFQ) -> dict:
+    """Run one configuration over every labeled document and score it."""
+    print(f"\n== {name}")
+    extractions = {}
     for t in truths:
         text = extract_text(t["filename"], (config.SAMPLES_DIR / t["filename"]).read_bytes())
-        quote, meta = demo_extraction(text) if args.demo else live_extraction(text, rfq, api_key, args.model, args.prompt)
-        print(f"{t['filename']}: {meta.get('status')} {meta.get('error') or ''}")
+        quote, meta = extractor(text)
+        route = f" (escalated: {'; '.join(meta['escalation_reasons'])})" if meta.get("escalated") else ""
+        print(f"  {t['filename']}: {meta.get('status')} {meta.get('model') or ''}{route} {meta.get('error') or ''}")
         extractions[t["filename"]] = (text, quote, meta)
 
     peers = [rules.unit_price_usd(flat_values(q)) for _, q, _ in extractions.values() if q]
     tp = fp = fn = 0
-    total_cost = total_latency = 0.0
-    source = None
+    docs = []
     for t in truths:
         text, quote, meta = extractions[t["filename"]]
-        total_cost += meta.get("cost_usd", 0.0)
-        total_latency += meta.get("latency_s", 0.0)
-        source = meta.get("recorded_source") or meta.get("source")
+        base = {"filename": t["filename"], "model": meta.get("model"), "escalated": meta.get("escalated", False),
+                "cost_usd": meta.get("cost_usd", 0.0), "latency_s": meta.get("latency_s", 0.0)}
         if not quote:
-            docs.append({"filename": t["filename"], "status": "failed", "error": meta.get("error")})
+            docs.append({**base, "status": "failed", "error": meta.get("error")})
             fn += len(t["expected_flags"])
             continue
-        g = grade(t["quote"], quote, text)
         found = {f.code for f in rules.evaluate(quote, rfq, text, peers)}
         expected = set(t["expected_flags"])
-        tp += len(found & expected)
-        fp += len(found - expected)
-        fn += len(expected - found)
-        docs.append({"filename": t["filename"], "status": "ok", **g,
-                     "flags_found": sorted(found), "flags_expected": sorted(expected),
-                     "cost_usd": meta.get("cost_usd", 0.0), "latency_s": meta.get("latency_s", 0.0)})
+        tp, fp, fn = tp + len(found & expected), fp + len(found - expected), fn + len(expected - found)
+        docs.append({**base, "status": "ok", **grade(t["quote"], quote, text),
+                     "flags_found": sorted(found), "flags_expected": sorted(expected)})
 
     graded = [f for d in docs if d["status"] == "ok" for f in d["fields"]]
-    total_fields = len(FIELD_SPECS) + 1
-    failed_fields = sum(total_fields for d in docs if d["status"] != "ok")
-    correct = sum(f["correct"] for f in graded)
-    cites_ok = sum(d.get("cites_ok", 0) for d in docs)
+    failed_fields = sum(len(FIELD_SPECS) + 1 for d in docs if d["status"] != "ok")
     cites_total = sum(d.get("cites_total", 0) for d in docs)
-
-    summary = {
+    first_meta = next(iter(extractions.values()))[2]
+    source = first_meta.get("recorded_source") or first_meta.get("source")
+    return {
+        "config": name,
         "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "source": "live Claude call" if source == "live" else f"recorded ({source})",
-        "model": args.model if not args.demo else next(
-            (m.get("model") for _, _, m in extractions.values() if m.get("model")), "n/a"),
-        "prompt_version": args.prompt if not args.demo else next(
-            (m.get("prompt_version") for _, _, m in extractions.values() if m.get("prompt_version")), "n/a"),
+        "model": ", ".join(sorted({d["model"] for d in docs if d.get("model")})) or "n/a",
+        "prompt_version": first_meta.get("prompt_version") or config.EXTRACT_PROMPT_VERSION,
         "documents": len(truths),
-        "field_accuracy": correct / (len(graded) + failed_fields) if graded or failed_fields else 0.0,
-        "citation_rate": cites_ok / cites_total if cites_total else 0.0,
+        "field_accuracy": sum(f["correct"] for f in graded) / (len(graded) + failed_fields) if graded or failed_fields else 0.0,
+        "citation_rate": sum(d.get("cites_ok", 0) for d in docs) / cites_total if cites_total else 0.0,
         "flag_recall": tp / (tp + fn) if tp + fn else 1.0,
         "flag_precision": tp / (tp + fp) if tp + fp else 1.0,
-        "total_cost_usd": total_cost,
-        "avg_latency_s": total_latency / len(truths),
+        "escalation_rate": sum(d["escalated"] for d in docs) / len(docs),
+        "total_cost_usd": sum(d["cost_usd"] for d in docs),
+        "cost_per_document_usd": sum(d["cost_usd"] for d in docs) / len(docs),
+        "avg_latency_s": sum(d["latency_s"] for d in docs) / len(docs),
         "documents_detail": docs,
     }
-    (config.EVALS_DIR / "results.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
 
+
+def write_report(summary: dict) -> None:
     lines = [
         "# Extraction evaluation report", "",
-        f"- Run: {summary['run_at']}",
-        f"- Source: {summary['source']} · model `{summary['model']}` · prompt `{summary['prompt_version']}`",
+        f"- Run: {summary['run_at']} · configuration: **{summary['config']}**",
+        f"- Source: {summary['source']} · model(s) `{summary['model']}` · prompt `{summary['prompt_version']}`",
         f"- Documents: {summary['documents']}", "",
         "| Metric | Result | Target |", "|---|---|---|",
         f"| Field accuracy | {summary['field_accuracy']:.1%} | ≥ 95% |",
         f"| Citations found in document | {summary['citation_rate']:.1%} | 100% |",
         f"| Exception recall | {summary['flag_recall']:.0%} | 100% |",
         f"| Exception precision | {summary['flag_precision']:.0%} | ≥ 90% |",
-        f"| Total API cost | ${summary['total_cost_usd']:.4f} | |",
+        f"| Escalated to stronger model | {summary['escalation_rate']:.0%} | |",
+        f"| Cost per document | ${summary['cost_per_document_usd']:.4f} | |",
         f"| Avg latency / document | {summary['avg_latency_s']:.1f} s | |", "",
     ]
-    if summary["source"].startswith("recorded (fixture)"):
+    if "fixture" in summary["source"]:
         lines += ["> Note: this run replayed hand-labeled fixtures, so field accuracy is 100% by construction. "
                   "It validates the pipeline and business rules only. Run without `--demo` to measure Claude.", ""]
     lines.append("## Misses")
     misses = 0
-    for d in docs:
+    for d in summary["documents_detail"]:
         if d["status"] != "ok":
             lines.append(f"- **{d['filename']}**: extraction failed ({d['error']})")
             misses += 1
@@ -160,10 +146,70 @@ def main() -> None:
         lines.append("None.")
     (config.EVALS_DIR / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(f"\nfield accuracy {summary['field_accuracy']:.1%} · citations {summary['citation_rate']:.1%} · "
-          f"flag recall {summary['flag_recall']:.0%} · precision {summary['flag_precision']:.0%} · "
-          f"cost ${total_cost:.4f}")
-    print("wrote evals/results.json and evals/report.md")
+
+def write_comparison(summaries: list[dict]) -> None:
+    lines = [
+        "# Model routing comparison", "",
+        f"Run {summaries[0]['run_at']} · {summaries[0]['documents']} labeled documents · "
+        f"prompt `{summaries[0]['prompt_version']}`", "",
+        "| Configuration | Field accuracy | Citations | Exception recall | Escalated | Cost / doc | Latency / doc |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        lines.append(f"| {s['config']} | {s['field_accuracy']:.1%} | {s['citation_rate']:.1%} | {s['flag_recall']:.0%} | "
+                     f"{s['escalation_rate']:.0%} | ${s['cost_per_document_usd']:.4f} | {s['avg_latency_s']:.1f} s |")
+    lines += ["", "**How to read this:** keep the cheapest configuration whose accuracy and exception recall match the "
+                  "strongest model. With only a handful of documents, a one-field difference is within noise; "
+                  "add labeled quotes before making a production cutover decision."]
+    (config.EVALS_DIR / "model_comparison.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--demo", action="store_true", help="replay recorded extractions instead of calling Claude")
+    mode.add_argument("--compare", action="store_true", help="compare routed extraction with each model alone")
+    mode.add_argument("--model", help="evaluate a single model with no escalation")
+    parser.add_argument("--prompt", default=config.EXTRACT_PROMPT_VERSION)
+    args = parser.parse_args()
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not args.demo and not api_key:
+        sys.exit("ANTHROPIC_API_KEY is not set. Use --demo to evaluate recorded extractions.")
+
+    rfq = RFQ.model_validate(json.loads((config.SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8")))
+    truths = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(config.GROUND_TRUTH_DIR.glob("*.json"))]
+    routes = config.MODEL_ROUTES
+
+    def single(model):
+        return lambda text: live_extraction(text, rfq, api_key, model, args.prompt)
+
+    def routed(text):
+        return routed_extraction(text, rfq, api_key, args.prompt)
+
+    routed_name = f"routed: {routes['extract']} → {routes['extract_escalation']}"
+    if args.demo:
+        summaries = [evaluate("recorded extractions", demo_extraction, truths, rfq)]
+    elif args.compare:
+        summaries = [evaluate(f"{routes['extract_escalation']} only", single(routes["extract_escalation"]), truths, rfq),
+                     evaluate(f"{routes['extract']} only", single(routes["extract"]), truths, rfq),
+                     evaluate(routed_name, routed, truths, rfq)]
+        write_comparison(summaries)
+    elif args.model:
+        summaries = [evaluate(f"{args.model} only", single(args.model), truths, rfq)]
+    else:
+        summaries = [evaluate(routed_name, routed, truths, rfq)]
+
+    primary = summaries[-1]  # the production (routed) configuration when comparing
+    (config.EVALS_DIR / "results.json").write_text(json.dumps(primary, indent=2, default=str), encoding="utf-8")
+    write_report(primary)
+
+    print()
+    for s in summaries:
+        print(f"{s['config']:45s} accuracy {s['field_accuracy']:.1%} · citations {s['citation_rate']:.1%} · "
+              f"recall {s['flag_recall']:.0%} · escalated {s['escalation_rate']:.0%} · "
+              f"${s['cost_per_document_usd']:.4f}/doc")
+    print("wrote evals/results.json and evals/report.md" + (" and evals/model_comparison.md" if args.compare else ""))
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import time
 import anthropic
 
 from . import config
-from .extract import cost_usd, load_prompt
+from .extract import cost_usd, fallback_kwargs, load_prompt
 from .rules import label
 from .schemas import RFQ
 
@@ -82,7 +82,7 @@ def template_memo(rfq: RFQ, ranked: list[dict], weights: dict) -> str:
 
 
 def llm_memo(rfq: RFQ, ranked: list[dict], weights: dict, api_key: str,
-             model: str = config.DEFAULT_MODEL) -> tuple[str | None, dict]:
+             model: str = config.MODEL_ROUTES["memo"]) -> tuple[str | None, dict]:
     client = anthropic.Anthropic(api_key=api_key)
     payload = memo_payload(rfq, ranked)
     payload["weights"] = weights
@@ -95,9 +95,8 @@ def llm_memo(rfq: RFQ, ranked: list[dict], weights: dict, api_key: str,
             system=load_prompt(config.MEMO_PROMPT_VERSION),
             messages=[{"role": "user", "content": "Draft the award memo from this verified data:\n\n"
                                                   f"```json\n{json.dumps(payload, indent=2)}\n```"}],
-            betas=[config.FALLBACK_BETA],
-            fallbacks="default",
-            output_config={"effort": "medium"},
+            output_config={"effort": "medium"},  # writing from verified data needs little reasoning
+            **fallback_kwargs(model),
         )
     except anthropic.APIError as e:
         meta.update(status="failed", error=str(e), latency_s=time.perf_counter() - start)

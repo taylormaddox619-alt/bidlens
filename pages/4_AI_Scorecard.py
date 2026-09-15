@@ -71,12 +71,35 @@ b1.metric("Buyer hours saved (est.)", f"{hours_saved:.1f}",
 b2.metric("Cost avoided vs. lowest unit price", ui.money(cost_avoided),
           help="Landed cost of the lowest-unit-price bid minus landed cost of the awarded bid")
 b3.metric("Live API spend", f"${live_cost:.2f}")
-b4.metric("API cost per quote", f"${live_cost / len(live_runs):.3f}" if live_runs else "n/a (demo)")
+live_quotes = {r["quote_id"] for r in live_runs if r["purpose"] in ("extract", "extract_escalation")}
+b4.metric("API cost per quote", f"${live_cost / len(live_quotes):.3f}" if live_quotes else "n/a (demo)",
+          help="All model calls for a quote, including escalations, divided by quotes processed live")
 
 followed = [a for a in awards if a["followed_recommendation"]]
 if awards:
     st.caption(f"Buyers followed the top-scored recommendation in {len(followed)} of {len(awards)} awards; "
                "overrides require a written justification.")
+
+st.markdown("#### Model routing")
+first_pass = [r for r in live_runs if r["purpose"] == "extract"]
+escalations = [r for r in live_runs if r["purpose"] == "extract_escalation"]
+r1, r2 = st.columns([1, 2])
+r1.metric("Extractions escalated to stronger model",
+          f"{len(escalations) / len(first_pass):.0%}" if first_pass else "n/a (demo)",
+          help="Share of first-pass extractions that failed automatic checks (missing citations, "
+               "low confidence on required fields, schema failure) and were re-run on the escalation model")
+with r2:
+    if live_runs:
+        by_model = (pd.DataFrame(live_runs).groupby("model")
+                    .agg(calls=("id", "count"), cost_usd=("cost_usd", "sum"), avg_latency_s=("latency_s", "mean"))
+                    .reset_index())
+        st.dataframe(by_model, hide_index=True, width="stretch",
+                     column_config={"cost_usd": st.column_config.NumberColumn("Spend", format="$%.4f"),
+                                    "avg_latency_s": st.column_config.NumberColumn("Avg latency", format="%.1f s")})
+    else:
+        routes = config.MODEL_ROUTES
+        st.caption(f"Routing: extraction on `{routes['extract']}`, escalating to `{routes['extract_escalation']}` "
+                   f"when checks fail; memos on `{routes['memo']}`. Spend by model appears after live runs.")
 
 st.markdown("#### Model runs")
 if extract_runs or runs:

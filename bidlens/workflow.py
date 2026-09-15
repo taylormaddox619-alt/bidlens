@@ -20,9 +20,12 @@ def process_document(event_id: str, rfq: RFQ, filename: str, data: bytes, mode: 
     status = "extracted" if quote else "failed"
     quote_id = db.add_quote(event_id, filename, text_sha(text), text, quote, [], status, actor)
     if meta.get("source") in ("live", "demo_cache"):
-        db.log_llm_run(meta, "extract", event_id, quote_id)
+        # Log each model call separately so the scorecard can show spend by model and escalation rate.
+        for run in meta.get("runs") or [meta]:
+            db.log_llm_run({**run, "source": meta["source"]}, run.get("purpose", "extract"), event_id, quote_id)
     return {"filename": filename, "quote_id": quote_id, "status": status, "error": meta.get("error"),
-            "source": meta.get("recorded_source") or meta.get("source"), "cost_usd": meta.get("cost_usd", 0.0)}
+            "source": meta.get("recorded_source") or meta.get("source"), "cost_usd": meta.get("cost_usd", 0.0),
+            "model": meta.get("model"), "escalated": meta.get("escalated", False)}
 
 
 def refresh_flags(event_id: str, rfq: RFQ) -> None:

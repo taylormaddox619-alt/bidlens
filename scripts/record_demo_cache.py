@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from bidlens import config  # noqa: E402
-from bidlens.extract import live_extraction  # noqa: E402
+from bidlens.extract import routed_extraction  # noqa: E402
 from bidlens.ingest import extract_text, text_sha  # noqa: E402
 from bidlens.schemas import RFQ  # noqa: E402
 
@@ -32,7 +32,7 @@ def main() -> None:
         if path.suffix not in (".pdf", ".xlsx"):
             continue
         text = extract_text(path.name, path.read_bytes())
-        quote, meta = live_extraction(text, rfq, api_key)
+        quote, meta = routed_extraction(text, rfq, api_key)
         if not quote:
             print(f"FAILED {path.name}: {meta.get('error')}")
             continue
@@ -40,7 +40,9 @@ def main() -> None:
         record = {"filename": path.name, "quote": quote, "meta": meta}
         (config.DEMO_CACHE_DIR / f"{text_sha(text)}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
         total += meta["cost_usd"]
-        print(f"recorded {path.name}: {meta['input_tokens']} in / {meta['output_tokens']} out, "
+        route = (f"escalated {meta['first_pass_model']} -> {meta['model']} ({'; '.join(meta['escalation_reasons'])})"
+                 if meta.get("escalated") else meta["model"])
+        print(f"recorded {path.name}: {route}, {meta['input_tokens']} in / {meta['output_tokens']} out, "
               f"${meta['cost_usd']:.4f}, {meta['latency_s']:.1f}s")
     print(f"total ${total:.4f}")
 

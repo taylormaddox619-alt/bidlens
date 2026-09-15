@@ -92,7 +92,11 @@ for r in st.session_state.pop("last_results", []):
         st.error(f"{r['filename']}: {r['error']}. The quote can be entered manually on the Review page.")
     else:
         src = {"fixture": "recorded (hand-labeled)", "claude": "recorded Claude run", "live": "live Claude call"}
-        st.success(ui.md(f"{r['filename']}: extracted ({src.get(r['source'], r['source'])}, ${r['cost_usd']:.4f})"))
+        route = ""
+        if r["source"] != "fixture" and r.get("model"):
+            route = f", escalated to {r['model']}" if r["escalated"] else f", {r['model']}"
+        st.success(ui.md(f"{r['filename']}: extracted ({src.get(r['source'], r['source'])}{route}, "
+                         f"${r['cost_usd']:.4f})"))
 
 quotes = db.list_quotes(event_id)
 if quotes:

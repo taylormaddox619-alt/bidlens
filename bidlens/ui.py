@@ -58,7 +58,9 @@ def sidebar() -> dict:
         if not live_possible:
             st.caption("Live mode is off: no ANTHROPIC_API_KEY configured.")
         effective_mode = "live" if (mode == "Live" and live_possible and live_unlocked) else "demo"
-        st.caption(f"Model: `{config.DEFAULT_MODEL}` · prompt `{config.EXTRACT_PROMPT_VERSION}`")
+        routes = config.MODEL_ROUTES
+        st.caption(f"Extraction: `{routes['extract']}` → `{routes['extract_escalation']}` if checks fail · "
+                   f"Memo: `{routes['memo']}` · prompt `{config.EXTRACT_PROMPT_VERSION}`")
 
         events = db.list_events()
         event_id = None

@@ -14,13 +14,25 @@ EVALS_DIR = ROOT / "evals"
 DOCS_DIR = ROOT / "docs"
 DB_PATH = Path(os.environ.get("BIDLENS_DB", DATA_DIR / "bidlens.duckdb"))
 
-# --- Model settings -------------------------------------------------------
-DEFAULT_MODEL = os.environ.get("BIDLENS_MODEL", "claude-opus-5")
+# --- Model routing ---------------------------------------------------------
+# Each task runs on the cheapest model expected to hold quality, confirmed with
+# `python evals/run_evals.py --compare`. Extraction starts on Sonnet and escalates
+# to Opus only when the output fails automatic checks (see extract.escalation_reasons).
+# Haiku is deliberately unused: the simple checks are deterministic rules, which
+# cost nothing, and the remaining LLM tasks need to read bilingual quotes,
+# European number formats, and tier pricing reliably.
+MODEL_ROUTES = {
+    "extract": os.environ.get("BIDLENS_EXTRACT_MODEL", "claude-sonnet-5"),
+    "extract_escalation": os.environ.get("BIDLENS_ESCALATION_MODEL", "claude-opus-5"),
+    "memo": os.environ.get("BIDLENS_MEMO_MODEL", "claude-sonnet-5"),
+}
 EXTRACT_PROMPT_VERSION = "extract_v1"
 MEMO_PROMPT_VERSION = "memo_v1"
-# Server-side refusal fallback: if the primary model declines, the API re-runs
-# the request on Anthropic's recommended fallback model inside the same call.
+# Server-side refusal fallback: if the model declines, the API re-runs the request
+# on Anthropic's recommended fallback model inside the same call. Only sent to
+# models documented to accept it.
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
+FALLBACK_MODELS = {"claude-opus-5", "claude-fable-5-1"}
 
 # USD per 1M tokens (input, output). Used for the cost-per-run metric.
 MODEL_PRICING = {
