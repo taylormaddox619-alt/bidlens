@@ -11,5 +11,3 @@ data/*.duckdb.wal
 .streamlit/secrets.toml
 .env
 
-# Personal interview prep notes
-INTERVIEW_NOTES.md
