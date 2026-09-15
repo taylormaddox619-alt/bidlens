@@ -112,7 +112,9 @@ def md(text: str) -> str:
     return text.replace("$", "\\$")
 
 
-_LEGAL_SUFFIX = re.compile(r",?\s+(co\.,?\s*ltd\.?|gmbh|inc\.?|s\.a\. de c\.v\.|llc|ltd\.?|corp\.?)$", re.IGNORECASE)
+_LEGAL_SUFFIX = re.compile(
+    r",?\s+(co\.,?\s*ltd\.?|pvt\.?\s*ltd\.?|gmbh|ag|inc\.?|s\.a\. de c\.v\.|s\.r\.l\.?|s\.p\.a\.?|llc|ltd\.?|corp\.?)$",
+    re.IGNORECASE)
 
 
 def display_name(supplier: str) -> str:

@@ -33,6 +33,9 @@ def test_display_names():
     assert ui.short_name("JADEPORT FOUNDRY CO., LTD.") == "Jadeport Foundry"
     assert ui.short_name("Kessler & Vogt Gusstechnik GmbH") == "Kessler & Vogt Gusstechnik"
     assert ui.display_name("ABC Castings Inc.") == "ABC Castings Inc."  # mixed case left alone
+    assert ui.short_name("Ironvale Components S.r.l.") == "Ironvale Components"
+    assert ui.short_name("Kestrel Machining Pvt. Ltd.") == "Kestrel Machining"
+    assert ui.short_name("Sierra Madre Castings S.A. de C.V.") == "Sierra Madre Castings"
 
 
 def test_every_page_key_maps_to_a_real_page():

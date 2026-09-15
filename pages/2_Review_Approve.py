@@ -40,8 +40,11 @@ if "review_flash" in st.session_state:
 
 done = sum(q["status"] in ui.REVIEWED for q in quotes)
 if done == len(quotes):
-    st.success("**✅ All quotes are reviewed.** Use the **Next** button above to compare bids and record the award. "
-               "You can still reopen any quote below.")
+    award = db.get_award(event_id)
+    st.success("**✅ All quotes are reviewed"
+               + (f" and the award is recorded ({ui.short_name(award['supplier'])}).** " if award
+                  else ".** Use the **Next** button above to compare bids and record the award. ")
+               + "You can still reopen any quote below.")
 
 with st.expander("📋 How to review a quote", expanded=done == 0):
     st.markdown(
