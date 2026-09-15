@@ -105,7 +105,15 @@ totals = alt.Chart(chart_df.drop_duplicates("Supplier")).mark_text(
     y=alt.Y("Supplier:N", sort=order), x=alt.X("Landed per unit:Q"),
     text=alt.Text("Landed per unit:Q", format="$,.2f"),
 )
-st.altair_chart((bars + totals).properties(height=70 * len(rows)).configure_view(stroke=None), width="stretch")
+# Fit the chart to the container width only. With Streamlit's default "fit" sizing the height
+# covers legend + axis + bars, which squeezed a 2-supplier chart to zero-height bars. Here the
+# height applies to the bars alone, and the legend and axis are added around them.
+BAR_ROW_PX = 52
+chart = (bars + totals).properties(
+    height=BAR_ROW_PX * len(rows),
+    autosize=alt.AutoSizeParams(type="fit-x", contains="padding"),
+).configure_view(stroke=None)
+st.altair_chart(chart, width="stretch")
 
 # --- Comparison table ---------------------------------------------------------------------
 st.markdown("#### Scorecard")
