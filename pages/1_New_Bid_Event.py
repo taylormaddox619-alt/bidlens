@@ -133,7 +133,7 @@ if "flash" in st.session_state:
 
 event, rfq = ui.load_rfq(event_id)
 quotes = db.list_quotes(event_id)
-pending = [q for q in quotes if q["status"] not in ("approved", "rejected")]
+pending = [q for q in quotes if q["status"] not in ui.REVIEWED]
 
 st.divider()
 st.subheader(event["name"])
@@ -144,14 +144,11 @@ m2.metric("Required lead time", f"{rfq.required_lead_time_weeks:g} wks")
 m3.metric("Standard terms", f"Net {rfq.standard_payment_days}")
 m4.metric("Evaluation date", rfq.evaluation_date.isoformat())
 
-# --- Progress + next step ---------------------------------------------------------------
-steps = [("1. Upload quotes", bool(quotes)), ("2. Review & approve", bool(quotes) and not pending),
-         ("3. Compare & award", db.get_award(event_id) is not None)]
-st.markdown("  →  ".join(f"✅ {label}" if done else f"⬜ {label}" for label, done in steps))
+ui.workflow_stepper(event_id, "setup")
 
 if not quotes:
-    st.info("**Next step: add the supplier quotes you received for this RFQ.** Upload PDF or Excel quote files "
-            "below, then click **Extract**.")
+    st.info("**👉 Your next step: add the supplier quotes you received for this RFQ.** Upload PDF or Excel quote "
+            "files at the bottom of this page, or use one of the options below.")
     if ctx["mode"] == "demo":
         st.warning("You're in **Demo mode**, which can only read the 4 bundled sample quotes. To analyze your own "
                    "quote files, switch to **Live** in the sidebar (passcode required).")
@@ -170,18 +167,6 @@ if not quotes:
             st.rerun()
         st.caption("The samples quote a compressor housing, but the rules check them against *this* event's "
                    "quantity, lead time and payment terms.")
-elif pending:
-    st.info(f"**Next step: review and approve {len(pending)} quote(s).**")
-    ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
-else:
-    st.info("**Next step: all quotes are reviewed. Compare the bids and record the award.**")
-    ui.nav_link("pages/3_Comparison.py", "Go to Comparison", "⚖️")
-
-uploads = st.file_uploader("Upload supplier quotes" + (" (more)" if quotes else ""),
-                           type=list(SUPPORTED_TYPES), accept_multiple_files=True)
-if uploads and st.button(f"Extract {len(uploads)} document(s)", type="primary"):
-    run_documents(event_id, [(u.name, u.getvalue()) for u in uploads])
-    st.rerun()
 
 scores = st.session_state.pop("generation_scores", None)
 if scores:
@@ -213,17 +198,33 @@ for r in st.session_state.pop("last_results", []):
 
 if quotes:
     st.markdown("#### Quotes in this event")
+    high_pending = [q for q in pending if ui.risk_level(q["flags"]) == "high"]
+    if high_pending:
+        st.error(f"**🔴 {len(high_pending)} quote{'s have' if len(high_pending) != 1 else ' has'} high-risk issues.** "
+                 f"Review {'those' if len(high_pending) != 1 else 'it'} first: "
+                 + ", ".join(ui.short_name(ui.quote_supplier(q)) for q in high_pending))
+    ordered = sorted(quotes, key=lambda q: (q["status"] in ui.REVIEWED, ui.RISK_RANK[ui.risk_level(q["flags"])]))
     table = pd.DataFrame([
         {
-            "File": q["filename"],
-            "Supplier": ((q["reviewed"] or {}).get("supplier_name") or {}).get("value", "-"),
+            "Risk": ui.RISK_LABEL[ui.risk_level(q["flags"])],
+            "Supplier": ui.quote_supplier(q),
             "Status": ui.STATUS_BADGE.get(q["status"], q["status"]),
-            "High flags": sum(f["severity"] == "high" for f in q["flags"]),
-            "Medium flags": sum(f["severity"] == "medium" for f in q["flags"]),
+            "🔴 High": ui.flag_counts(q["flags"])["high"],
+            "🟠 Medium": ui.flag_counts(q["flags"])["medium"],
+            "File": q["filename"],
         }
-        for q in quotes
+        for q in ordered
     ])
     st.dataframe(table, hide_index=True, width="stretch")
+    st.caption(ui.severity_legend())
+    ui.next_step_button(event_id, "setup", key="next_bottom_setup")
+
+st.markdown("#### Add quotes")
+uploads = st.file_uploader("Upload supplier quotes (PDF, Excel, text)", type=list(SUPPORTED_TYPES),
+                           accept_multiple_files=True)
+if uploads and st.button(f"Extract {len(uploads)} document(s)", type="primary"):
+    run_documents(event_id, [(u.name, u.getvalue()) for u in uploads])
+    st.rerun()
 
 with st.expander("Danger zone"):
     if st.button("Delete this bid event"):

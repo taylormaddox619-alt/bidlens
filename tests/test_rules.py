@@ -1,4 +1,5 @@
 import copy
+import re
 
 from bidlens import rules
 from bidlens.schemas import flat_values
@@ -49,6 +50,13 @@ def test_price_outlier(samples, rfq):
     quote["unit_price"]["edited"] = True
     flags = rules.evaluate(quote, rfq, s["text"], [172.0, 184.8, 194.0, 400.0])
     assert "PRICE_OUTLIER" in codes(flags)
+
+
+def test_every_rule_has_a_recommended_action():
+    source = open(rules.__file__, encoding="utf-8").read()
+    emitted = set(re.findall(r'Flag\("([A-Z_]+)"', source))
+    assert len(emitted) == 16
+    assert emitted <= set(rules.RECOMMENDED_ACTIONS), emitted - set(rules.RECOMMENDED_ACTIONS)
 
 
 def test_flags_sorted_by_severity(samples, rfq):

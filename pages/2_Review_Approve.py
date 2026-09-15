@@ -11,7 +11,7 @@ ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.p
 from bidlens import db, review, ui, workflow
 from bidlens.grading import compare_fields
 from bidlens.ingest import quote_in_document
-from bidlens.rules import label
+from bidlens.rules import SEVERITY_ORDER, label
 from bidlens.schemas import FIELD_SPECS
 
 ui.setup_page("Review & Approve", "🔎")
@@ -29,26 +29,60 @@ if not event_id:
 event, rfq = ui.load_rfq(event_id)
 quotes = db.list_quotes(event_id)
 if not quotes:
-    st.info("No quotes uploaded for this event yet.")
+    st.info("**No quotes in this event yet.** 👉 Add supplier quotes on **New Bid Event** first.")
+    ui.nav_link("pages/1_New_Bid_Event.py", "Go to New Bid Event", "🆕")
     st.stop()
 
-done = sum(q["status"] in ("approved", "rejected") for q in quotes)
-st.progress(done / len(quotes), text=f"{done} of {len(quotes)} quotes reviewed")
+ui.workflow_stepper(event_id, "review")
+
+if "review_flash" in st.session_state:
+    st.success(st.session_state.pop("review_flash"))
+
+done = sum(q["status"] in ui.REVIEWED for q in quotes)
+if done == len(quotes):
+    st.success("**✅ All quotes are reviewed.** Use the **Next** button above to compare bids and record the award. "
+               "You can still reopen any quote below.")
+
+with st.expander("📋 How to review a quote", expanded=done == 0):
+    st.markdown(
+        "1. **Read the colored boxes.** 🔴 Red = high risk, 🟠 amber = medium risk. Each item says what to do.\n"
+        "2. **Check the evidence.** The document on the right highlights the text each value came from.\n"
+        "3. **Fix wrong values** in the *Value* column, then click **Save edits**. The rules re-run automatically.\n"
+        "4. **Approve** the quote to include it in the comparison (tick the box to accept any remaining red flags), "
+        "or **Reject** it. The next quote opens automatically, highest risk first."
+    )
+    st.caption(ui.severity_legend())
 
 
 def quote_label(q: dict) -> str:
-    supplier = ((q["reviewed"] or {}).get("supplier_name") or {}).get("value") or q["filename"]
-    return f"{ui.STATUS_BADGE.get(q['status'], q['status'])} · {supplier}"
+    return f"{ui.risk_badge(q['flags'], compact=True)} · {ui.STATUS_BADGE.get(q['status'], q['status'])} · " \
+           f"{ui.quote_supplier(q)}"
 
 
-pending_first = sorted(quotes, key=lambda q: q["status"] in ("approved", "rejected"))
-ids = [q["id"] for q in pending_first]
+# Pending quotes first, highest risk first.
+ordered = sorted(quotes, key=lambda q: (q["status"] in ui.REVIEWED, ui.RISK_RANK[ui.risk_level(q["flags"])]))
+ids = [q["id"] for q in ordered]
 by_id = {q["id"]: q for q in quotes}
 selected = st.session_state.get("review_quote")
-quote_id = st.selectbox("Quote", ids, index=ids.index(selected) if selected in ids else 0,
+quote_id = st.selectbox("Quote to review (pending and highest risk first)", ids,
+                        index=ids.index(selected) if selected in ids else 0,
                         format_func=lambda i: quote_label(by_id[i]))
 st.session_state["review_quote"] = quote_id
 q = by_id[quote_id]
+
+
+def after_decision(verb: str) -> None:
+    """Remember what just happened and what's next, then let the page open the next pending quote."""
+    remaining = [x for x in ordered if x["status"] not in ui.REVIEWED and x["id"] != q["id"]]
+    name = ui.short_name(ui.quote_supplier(q))
+    if remaining:
+        upcoming = remaining[0]
+        st.session_state["review_flash"] = (
+            f"{verb} **{name}**. Next up: **{ui.short_name(ui.quote_supplier(upcoming))}** "
+            f"({ui.risk_badge(upcoming['flags'])}) · {len(remaining)} left.")
+    else:
+        st.session_state["review_flash"] = f"{verb} **{name}**. That was the last quote."
+    st.session_state.pop("review_quote", None)
 
 
 def empty_quote() -> dict:
@@ -67,17 +101,13 @@ if q["reviewed"] is None:
     st.stop()
 
 reviewed = q["reviewed"]
-locked = q["status"] in ("approved", "rejected")
+locked = q["status"] in ui.REVIEWED
 
-# --- Flags -------------------------------------------------------------------------
+# --- Risks ---------------------------------------------------------------------------
 flags = q["flags"]
 highs = [f for f in flags if f["severity"] == "high"]
-if flags:
-    st.markdown("#### Exceptions")
-    for f in flags:
-        st.markdown(ui.md(f"{ui.SEVERITY_ICON[f['severity']]} **{label(f['field'])}**: {f['message']}"))
-else:
-    st.success("No exceptions flagged.")
+st.markdown(f"#### Risks for {ui.short_name(ui.quote_supplier(q))} · {ui.risk_badge(flags)}")
+ui.render_flags(flags)
 
 answer_key = db.get_answer_key(quote_id)
 if answer_key and q["extraction"]:
@@ -100,7 +130,9 @@ left, right = st.columns([3, 2], gap="large")
 # --- Editable extraction ------------------------------------------------------------
 with left:
     st.markdown("#### Extracted terms")
-    flagged_fields = {f["field"] for f in flags}
+    field_icon = {}  # most severe flag per field
+    for f in sorted(flags, key=lambda f: SEVERITY_ORDER[f["severity"]]):
+        field_icon.setdefault(f["field"], ui.SEVERITY_ICON[f["severity"]])
     rows = []
     for name, lbl, kind, required in FIELD_SPECS:
         field = reviewed.get(name) or {}
@@ -116,7 +148,7 @@ with left:
             evidence = "⚠ citation not found"
         rows.append({
             "field": name,
-            "Field": ("⚑ " if name in flagged_fields else "") + lbl + (" *" if required else ""),
+            "Field": (f"{field_icon[name]} " if name in field_icon else "") + lbl + (" *" if required else ""),
             "Value": review.display_value(value),
             "Confidence": field.get("confidence", ""),
             "Evidence": evidence,
@@ -135,6 +167,8 @@ with left:
             "Source text": st.column_config.TextColumn(disabled=True, width="large"),
         },
     )
+    st.caption("🔴/🟠 next to a field = it has a flag in the boxes above · * = required · "
+               "double-click a Value to edit it")
 
     st.markdown("**Price breaks**")
     tiers_df = pd.DataFrame(reviewed.get("price_tiers") or [],
@@ -180,26 +214,32 @@ with left:
         st.markdown("#### Decision")
         new, edits, errors = apply_edits()
         if edits:
-            st.warning("You have unsaved edits. Save them before approving.")
+            st.warning("✏️ You have unsaved edits. Click **Save edits** before approving.")
         missing_core = [label(n) for n in ("unit_price", "currency") if (reviewed.get(n) or {}).get("value") is None]
         ack = True
         if highs:
-            ack = st.checkbox(f"I have verified the {len(highs)} high-severity exception(s) and accept this quote "
-                              "for comparison with them documented.", key=f"ack_{quote_id}")
-        note = st.text_input("Review note (optional)", key=f"note_{quote_id}")
+            with st.container(border=True):
+                st.markdown(ui.md(f"**🔴 To approve, you must accept {len(highs)} high-risk issue"
+                                  f"{'s' if len(highs) != 1 else ''}:**\n"
+                                  + "\n".join(f"- {label(f['field'])}: {f['message']}" for f in highs)))
+                ack = st.checkbox("I have checked these high-risk issues and accept this quote for comparison, "
+                                  "with the issues recorded.", key=f"ack_{quote_id}")
+        note = st.text_input("Review note (optional; recorded in the audit log)", key=f"note_{quote_id}")
         a, r = st.columns(2)
         can_approve = ack and not edits and not missing_core
         if a.button("✅ Approve quote", type="primary", disabled=not can_approve, width="stretch"):
             db.set_quote_status(q["id"], "approved", ctx["actor"], event_id, note)
-            st.session_state.pop("review_quote", None)  # move on to the next pending quote
+            after_decision("✅ Approved")
             st.rerun()
         if r.button("⛔ Reject quote", width="stretch"):
             db.set_quote_status(q["id"], "rejected", ctx["actor"], event_id, note or "Rejected by buyer")
             workflow.refresh_flags(event_id, rfq)
-            st.session_state.pop("review_quote", None)
+            after_decision("⛔ Rejected")
             st.rerun()
         if missing_core:
             st.caption(f"Approval blocked: {', '.join(missing_core)} required for landed-cost comparison.")
+        elif highs and not ack:
+            st.caption("Approve is disabled until you tick the box above.")
 
 
 # --- Source document with highlighted citations ----------------------------------
@@ -227,6 +267,5 @@ with right:
     )
     st.caption("Highlighted text = evidence cited by the extraction.")
 
-if done == len(quotes):
-    st.success("All quotes reviewed.")
-    ui.nav_link("pages/3_Comparison.py", "Next: comparison", "➡️")
+st.divider()
+ui.next_step_button(event_id, "review", key="next_bottom_review")

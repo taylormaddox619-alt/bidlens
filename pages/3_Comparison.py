@@ -23,17 +23,25 @@ if not event_id:
 
 event, rfq = ui.load_rfq(event_id)
 quotes = db.list_quotes(event_id)
-pending = [q for q in quotes if q["status"] not in ("approved", "rejected")]
+pending = [q for q in quotes if q["status"] not in ui.REVIEWED]
 approved = [q for q in quotes if q["status"] == "approved"]
 
+ui.workflow_stepper(event_id, "compare")
+
 # Guardrail: the comparison only uses buyer-verified data.
-if not quotes or pending:
-    st.warning(f"🔒 Comparison is locked until every quote is reviewed. "
-               f"{len(pending)} quote(s) still need approval or rejection.")
-    ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
+if not quotes:
+    st.warning("🔒 **Comparison is locked:** this event has no quotes yet. Add them on New Bid Event.")
+    st.stop()
+if pending:
+    st.warning(f"🔒 **Comparison is locked until every quote is reviewed.** "
+               f"{len(pending)} quote{'s' if len(pending) != 1 else ''} still need{'' if len(pending) != 1 else 's'} "
+               "a decision:")
+    for pq in sorted(pending, key=lambda x: ui.RISK_RANK[ui.risk_level(x["flags"])]):
+        st.markdown(f"- **{ui.quote_supplier(pq)}** · {ui.risk_badge(pq['flags'])}")
     st.stop()
 if len(approved) < 2:
-    st.warning("At least two approved quotes are needed for a comparison.")
+    st.warning("🔒 **At least two approved quotes are needed for a comparison.** Reopen a rejected quote on "
+               "Review & Approve, or add more quotes on New Bid Event.")
     st.stop()
 
 with st.sidebar:
@@ -125,6 +133,7 @@ table = pd.DataFrame([
     {
         "Rank": i + 1,
         "Supplier": r["supplier"],
+        "Risk flags": ui.risk_badge(r["flags"]),
         "Score": round(r["overall"], 1),
         "Quoted unit": f"{r['landed'].unit_price_quoted:,.2f} {r['landed'].currency}",
         "Unit USD": r["landed"].unit_price_usd,
@@ -137,7 +146,7 @@ table = pd.DataFrame([
         "Landed / unit": r["landed"].landed_per_unit_usd,
         "Lead time (wks)": r["values"].get("lead_time_weeks"),
         "Cost": round(r["cost_score"]), "Lead": round(r["lead_time_score"]),
-        "Terms": round(r["terms_score"]), "Risk": round(r["risk_score"]),
+        "Terms": round(r["terms_score"]), "Risk score": round(r["risk_score"]),
     }
     for i, r in enumerate(rows)
 ])
@@ -151,6 +160,20 @@ st.dataframe(
 st.download_button("Download comparison (CSV)", table.to_csv(index=False), f"{event['name']}_comparison.csv",
                    "text/csv")
 
+st.markdown("#### Red flags by supplier")
+flag_rows = []
+for r in sorted(rows, key=lambda r: ui.RISK_RANK[ui.risk_level(r["flags"])]):
+    counts = ui.flag_counts(r["flags"])
+    flag_rows.append({
+        "Risk": ui.RISK_LABEL[ui.risk_level(r["flags"])], "Supplier": r["supplier"],
+        "🔴 High": counts["high"], "🟠 Medium": counts["medium"],
+        "High-risk issues (accepted at review)": "; ".join(
+            f"{label(f['field'])}: {f['message']}" for f in r["flags"] if f["severity"] == "high") or "-",
+    })
+st.dataframe(pd.DataFrame(flag_rows), hide_index=True, width="stretch")
+st.caption("These quotes were approved with their flags visible. High-risk items still need follow-up before award. "
+           + ui.severity_legend())
+
 with st.expander("How each score was calculated"):
     for r in rows:
         st.markdown(f"**{r['supplier']}** — overall {r['overall']:.1f}")
@@ -160,12 +183,11 @@ with st.expander("How each score was calculated"):
 
 # --- Memo & decision ----------------------------------------------------------------------
 st.divider()
-st.markdown("#### Award recommendation")
-open_flags = [f for f in best["flags"] if f["severity"] in ("high", "medium")]
-if open_flags:
-    st.markdown(f"Open items on **{best['supplier']}** to close before award:")
-    for f in open_flags:
-        st.markdown(ui.md(f"- {ui.SEVERITY_ICON[f['severity']]} {label(f['field'])}: {f['message']}"))
+st.markdown(f"#### Award recommendation: {best['supplier']} · {ui.risk_badge(best['flags'])}")
+if any(f["severity"] == "high" for f in best["flags"]):
+    st.error("**🔴 The highest-scoring supplier has high-risk issues.** Close them, or choose another supplier "
+             "with a written justification, before recording the award.")
+ui.render_flags([f for f in best["flags"] if f["severity"] in ("high", "medium")])
 
 memo_key = f"memo_{event_id}"
 c1, c2 = st.columns(2)
@@ -210,3 +232,5 @@ if st.button("Record award decision", type="primary", disabled=choice != best["s
         "followed_recommendation": choice == best["supplier"], "justification": justification,
     }, ctx["actor"])
     st.rerun()
+if award:
+    ui.next_step_button(event_id, "compare", key="next_bottom_compare")

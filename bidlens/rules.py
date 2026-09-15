@@ -12,6 +12,27 @@ from .schemas import FIELD_LABELS, FIELD_SPECS, RFQ, flat_values
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
+# What a buyer should do about each exception. Looked up by code at display time, so flags
+# already stored in the database pick up wording changes.
+RECOMMENDED_ACTIONS = {
+    "MISSING_FIELD": "Request the missing term from the supplier in writing before award.",
+    "UNVERIFIED_SOURCE": "Check this value against the document; correct it, or reject the quote if unclear.",
+    "LOW_CONFIDENCE": "Read the highlighted text and confirm or correct the value.",
+    "CURRENCY_MISMATCH": "Confirm the currency with the supplier and consider FX risk or a USD requote.",
+    "UNKNOWN_CURRENCY": "Ask the supplier to requote in a supported currency.",
+    "LEAD_TIME_EXCEEDS": "Ask whether the supplier can expedite, or confirm the requirement can move.",
+    "QUOTE_EXPIRED": "Ask the supplier to revalidate the quote before any award.",
+    "PAYMENT_TERMS_BELOW_STANDARD": "Negotiate toward standard terms, or accept the added working-capital cost.",
+    "PREPAYMENT_REQUIRED": "Negotiate the deposit down, or check supplier financial risk with Treasury.",
+    "FREIGHT_ESTIMATED": "Get a firm freight quote before comparing; the landed cost uses an estimate.",
+    "UNKNOWN_ORIGIN": "Confirm country of origin; duty could not be estimated.",
+    "TARIFF_EXPOSURE": "Confirm the HTS classification and tariff rate with Trade Compliance.",
+    "MOQ_ABOVE_QTY": "Negotiate the MOQ, or confirm whether extra units are acceptable.",
+    "PRICE_OUTLIER": "Check scope, quantity basis, and units; the price is far from other bids.",
+    "SUPPLIER_EXCEPTIONS": "Read the supplier's conditions and confirm none conflict with the RFQ.",
+    "SUSPICIOUS_INSTRUCTION": "Do not act on the embedded text. Escalate to Procurement Excellence before continuing.",
+}
+
 # Phrases that suggest a document is trying to instruct an AI reviewer.
 _INJECTION_PATTERNS = [
     r"\b(ignore|disregard)\b.{0,40}\b(instructions|other (bids|quotes|suppliers))\b",

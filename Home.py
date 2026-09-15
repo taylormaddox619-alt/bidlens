@@ -45,10 +45,11 @@ with left:
     st.markdown("#### Try the demo in 2 minutes")
     st.markdown(
         """
-1. **New Bid Event**: click *Load demo scenario* (RFQ for 500 compressor air-end housings, 4 fictional suppliers).
-2. **Review & Approve**: look at the flags and highlighted source text, fix the missing warranty, approve each quote.
-3. **Comparison**: see why the lowest unit price loses on landed cost, adjust the weights, and generate the memo.
-4. **AI Scorecard** and **Governance**: see how the tool is measured and controlled.
+1. **New Bid Event → Quick start**: click *Load demo scenario*, or *🎲 Generate a fresh scenario* for suppliers nobody has seen.
+2. Follow the **step tracker** at the top of each page. The blue **Next** button always takes you to the next step.
+3. **Review & Approve**: quotes open highest risk first. 🔴 **Red boxes** are high-risk issues and 🟠 **amber boxes** are medium risk, each with what to do. Fix values, then approve or reject.
+4. **Comparison**: see why the lowest unit price loses on landed cost, check red flags by supplier, and record the award.
+5. **AI Scorecard** and **Governance**: see how the tool is measured and controlled.
 """
     )
     ui.nav_link("pages/1_New_Bid_Event.py", "Start: New Bid Event", "➡️")
