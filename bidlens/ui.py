@@ -4,6 +4,7 @@ import os
 import re
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from . import config, db
 from .rules import RECOMMENDED_ACTIONS, label
@@ -26,6 +27,40 @@ STATUS_BADGE = {
 REVIEWED = ("approved", "rejected")
 PAGES = {"setup": "pages/1_New_Bid_Event.py", "review": "pages/2_Review_Approve.py",
          "compare": "pages/3_Comparison.py", "scorecard": "pages/4_AI_Scorecard.py"}
+
+
+def request_scroll_to_top() -> None:
+    """Ask the next render of this page to start at the top (call just before st.rerun())."""
+    st.session_state["scroll_to_top"] = True
+
+
+def scroll_to_top_if_requested() -> None:
+    """Scroll the main pane to the top if a previous run asked for it.
+
+    Streamlit keeps the scroll position across reruns, so after a decision at the bottom of a long
+    quote the buyer would otherwise be left staring at the footer of the next quote. The script runs
+    inside a zero-height component iframe and scrolls the parent page's main container.
+    """
+    if not st.session_state.pop("scroll_to_top", False):
+        return
+    components.html(
+        """<script>
+        (function () {
+          const doc = window.parent.document;
+          const targets = [
+            doc.querySelector('section[data-testid="stMain"]'),
+            doc.querySelector('section.main'),
+            doc.querySelector('[data-testid="stAppViewContainer"]'),
+            doc.scrollingElement || doc.documentElement,
+          ];
+          for (const el of targets) {
+            if (el) { try { el.scrollTo({top: 0, behavior: "smooth"}); } catch (e) { el.scrollTop = 0; } }
+          }
+          window.parent.scrollTo(0, 0);
+        })();
+        </script>""",
+        height=0,
+    )
 
 
 def _secret(name: str) -> str | None:

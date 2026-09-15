@@ -56,3 +56,25 @@ def test_every_page_key_maps_to_a_real_page():
     from bidlens.config import ROOT
     for path in ui.PAGES.values():
         assert (ROOT / path).exists(), path
+
+
+def test_scroll_to_top_is_one_shot(monkeypatch):
+    """The scroll script renders only on the run right after a decision, then the flag is cleared."""
+    from streamlit.testing.v1 import AppTest  # noqa: F401  (ensures streamlit test deps are present)
+    import streamlit as st
+
+    calls = []
+    monkeypatch.setattr(ui.components, "html", lambda *a, **k: calls.append(a))
+    monkeypatch.setattr(st, "session_state", {})
+
+    ui.scroll_to_top_if_requested()
+    assert calls == []  # nothing requested
+
+    ui.request_scroll_to_top()
+    assert st.session_state["scroll_to_top"] is True
+    ui.scroll_to_top_if_requested()
+    assert len(calls) == 1 and "scrollTo" in calls[0][0]
+    assert "scroll_to_top" not in st.session_state
+
+    ui.scroll_to_top_if_requested()
+    assert len(calls) == 1  # one-shot

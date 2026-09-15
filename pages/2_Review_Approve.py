@@ -37,6 +37,7 @@ _, award = ui.workflow_stepper(event_id, "review", quotes)
 
 if "review_flash" in st.session_state:
     st.success(st.session_state.pop("review_flash"))
+ui.scroll_to_top_if_requested()  # decisions happen at the bottom of a long page; start the next quote at the top
 
 done = sum(q["status"] in ui.REVIEWED for q in quotes)
 if done == len(quotes) and award:
@@ -86,6 +87,7 @@ def after_decision(verb: str) -> None:
     else:
         st.session_state["review_flash"] = f"{verb} **{name}**. That was the last quote."
     st.session_state.pop("review_quote", None)
+    ui.request_scroll_to_top()
 
 
 def empty_quote() -> dict:
@@ -100,6 +102,7 @@ if q["reviewed"] is None:
         st.rerun()
     if st.button("Reject quote"):
         db.set_quote_status(q["id"], "rejected", ctx["actor"], event_id, "Unreadable document")
+        ui.request_scroll_to_top()
         st.rerun()
     st.stop()
 
