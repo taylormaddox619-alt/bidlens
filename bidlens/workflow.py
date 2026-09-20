@@ -94,14 +94,46 @@ def refresh_flags(event_id: str, rfq: RFQ) -> None:
         db.update_review(q["id"], q["reviewed"], flags, [], "system", event_id)
 
 
+def _landed(quote: dict, rfq: RFQ) -> tuple[costing.LandedCost | None, str | None]:
+    """(landed cost, None), or (None, reason) when the quote cannot be costed. Never raises.
+
+    The review page blocks approval of an uncostable quote, but rows approved before that check existed
+    are still in deployed databases, so the comparison has to tolerate them.
+    """
+    values = flat_values(quote["reviewed"] or {})
+    reason = costing.uncostable(values, rfq.quantity)
+    if reason:
+        return None, reason
+    try:
+        return costing.landed_cost(values, rfq), None
+    except ValueError as e:
+        return None, str(e)
+
+
+def excluded_from_comparison(event_id: str, rfq: RFQ) -> list[dict]:
+    """Approved quotes that `comparison` leaves out, each with the reason, so the page can say so."""
+    excluded = []
+    for q in db.list_quotes(event_id):
+        if q["status"] != "approved":
+            continue
+        _, reason = _landed(q, rfq)
+        if reason:
+            name = ((q["reviewed"] or {}).get("supplier_name") or {}).get("value")
+            excluded.append({"quote_id": q["id"], "supplier": name or q["filename"], "filename": q["filename"],
+                             "reason": reason})
+    return excluded
+
+
 def comparison(event_id: str, rfq: RFQ, weights: dict) -> list[dict]:
-    """Ranked rows for approved quotes, best first."""
+    """Ranked rows for approved quotes that can be costed, best first (see `excluded_from_comparison`)."""
     approved = [q for q in db.list_quotes(event_id) if q["status"] == "approved"]
     bids = []
     for q in approved:
-        values = flat_values(q["reviewed"])
-        bids.append({"quote_id": q["id"], "values": values, "flags": q["flags"],
-                     "landed": costing.landed_cost(values, rfq)})
+        landed, reason = _landed(q, rfq)
+        if reason:
+            continue
+        bids.append({"quote_id": q["id"], "filename": q["filename"], "values": flat_values(q["reviewed"]),
+                     "flags": q["flags"], "landed": landed})
     if not bids:
         return []
     by_id = {b["quote_id"]: b for b in bids}

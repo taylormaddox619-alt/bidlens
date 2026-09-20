@@ -39,7 +39,15 @@ if pending:
     for pq in sorted(pending, key=lambda x: ui.RISK_RANK[ui.risk_level(x["flags"])]):
         st.markdown(f"- **{ui.quote_supplier(pq)}** · {ui.risk_badge(pq['flags'])}")
     st.stop()
-if len(approved) < 2:
+# Quotes approved before the review page checked for this can lack an FX rate or a usable price.
+excluded = workflow.excluded_from_comparison(event_id, rfq)
+if excluded:
+    st.warning(ui.md(
+        f"**⚠️ {len(excluded)} approved quote{'s are' if len(excluded) != 1 else ' is'} left out of this comparison** "
+        "because a landed cost cannot be computed. Reopen and fix, or reject:\n"
+        + "\n".join(f"- **{ui.display_name(x['supplier'])}** (`{x['filename']}`): {x['reason']}" for x in excluded)))
+    ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
+if len(approved) - len(excluded) < 2:
     st.warning("🔒 **At least two approved quotes are needed for a comparison.** Reopen a rejected quote on "
                "Review & Approve, or add more quotes on New Bid Event.")
     st.stop()

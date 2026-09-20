@@ -37,6 +37,24 @@ def test_good_first_pass_is_accepted(samples):
     assert extract.escalation_reasons(s["quote"], {}, s["text"]) == []
 
 
+def test_every_bundled_sample_passes_the_gate(samples):
+    assert len(samples) == 4
+    for s in samples.values():
+        assert extract.escalation_reasons(s["quote"], {}, s["text"]) == []
+
+
+def test_unrecognized_currency_or_incoterm_triggers_escalation(samples):
+    s = samples["lakeshore"]
+    quote = copy.deepcopy(s["quote"])
+    quote["currency"]["value"] = "US Dollars"
+    quote["incoterm"]["value"] = "Ex Works"
+    reasons = extract.escalation_reasons(quote, {}, s["text"])
+    assert "currency: unrecognized 'US Dollars'" in reasons
+    assert "incoterm: not an Incoterms code 'Ex Works'" in reasons
+    quote["currency"]["value"] = "CHF"  # a real ISO code, but no FX rate on file, so costing would fail
+    assert any(r.startswith("currency:") for r in extract.escalation_reasons(quote, {}, s["text"]))
+
+
 def test_fabricated_citation_triggers_escalation(samples):
     s = samples["lakeshore"]
     quote = copy.deepcopy(s["quote"])

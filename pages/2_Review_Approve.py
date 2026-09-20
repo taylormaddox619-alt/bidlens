@@ -8,11 +8,11 @@ from reload_guard import ensure_fresh
 
 ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.py)
 
-from bidlens import db, review, ui, workflow
+from bidlens import costing, db, review, ui, workflow
 from bidlens.grading import compare_fields
 from bidlens.ingest import quote_in_document
 from bidlens.rules import SEVERITY_ORDER, label
-from bidlens.schemas import FIELD_SPECS
+from bidlens.schemas import FIELD_SPECS, flat_values
 
 ui.setup_page("Review & Approve", "🔎")
 ctx = ui.sidebar()
@@ -229,7 +229,8 @@ with left:
         new, edits, errors = apply_edits()
         if edits:
             st.warning("✏️ You have unsaved edits. Click **Save edits** before approving.")
-        missing_core = [label(n) for n in ("unit_price", "currency") if (reviewed.get(n) or {}).get("value") is None]
+        # A quote that cannot be costed must not reach the comparison; ticking the box below does not override this.
+        blocker = costing.uncostable(flat_values(reviewed), rfq.quantity)
         ack = True
         if highs:
             with st.container(border=True):
@@ -240,7 +241,7 @@ with left:
                                   "with the issues recorded.", key=f"ack_{quote_id}")
         note = st.text_input("Review note (optional; recorded in the audit log)", key=f"note_{quote_id}")
         a, r = st.columns(2)
-        can_approve = ack and not edits and not missing_core
+        can_approve = ack and not edits and not blocker
         if a.button("✅ Approve quote", type="primary", disabled=not can_approve, width="stretch"):
             db.set_quote_status(q["id"], "approved", ctx["actor"], event_id, note)
             after_decision("✅ Approved")
@@ -250,8 +251,8 @@ with left:
             workflow.refresh_flags(event_id, rfq)
             after_decision("⛔ Rejected")
             st.rerun()
-        if missing_core:
-            st.caption(f"Approval blocked: {', '.join(missing_core)} required for landed-cost comparison.")
+        if blocker:
+            st.caption(f"Approval blocked: {blocker}. Fix the value above, or reject the quote.")
         elif highs and not ack:
             st.caption("Approve is disabled until you tick the box above.")
 

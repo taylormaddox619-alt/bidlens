@@ -10,7 +10,7 @@ in `source_quote`.
 import re
 from datetime import date, datetime
 
-from .reference import country_code
+from .reference import country_code, fx_table
 
 INCOTERMS = ("EXW", "FCA", "FAS", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DPU", "DDP")
 DATE_FIELDS = ("quote_date", "valid_until")
@@ -26,6 +26,20 @@ _COUNTRY_ALIASES = {
 }
 _CURRENCY_SYMBOLS = {"$": "USD", "US$": "USD", "USD$": "USD", "€": "EUR", "£": "GBP", "¥": "CNY", "RMB": "CNY",
                      "MX$": "MXN", "C$": "CAD", "₹": "INR"}
+# Currency names the model may copy as written. These are unambiguous, so they match anywhere in the text,
+# longest phrase first ("canadian dollars" before anything shorter).
+_CURRENCY_NAMES = tuple(
+    (re.compile(r"\b" + phrase.replace(" ", r"\s+") + r"\b", re.IGNORECASE), code)
+    for phrase, code in sorted({
+        r"united states dollars?": "USD", r"u\.?s\.? dollars?": "USD", r"canadian dollars?": "CAD",
+        r"mexican pesos?": "MXN", r"indian rupees?": "INR", r"pounds? sterling": "GBP", r"sterling": "GBP",
+        r"euros?": "EUR", r"renminbi": "CNY", r"yuan": "CNY", r"yen": "JPY",
+    }.items(), key=lambda item: len(item[0]), reverse=True)
+)
+# Many countries have a dollar, peso, pound or rupee. The bare word is read as the usual one only when it is
+# the whole value; "Australian dollars" stays as written so the gate and the UNKNOWN_CURRENCY rule catch it.
+_BARE_CURRENCY_WORDS = {"dollar": "USD", "dollars": "USD", "peso": "MXN", "pesos": "MXN", "pound": "GBP",
+                        "pounds": "GBP", "rupee": "INR", "rupees": "INR"}
 
 
 def normalize_date(value: str) -> str:
@@ -49,11 +63,19 @@ def normalize_country(value: str) -> str:
 
 
 def normalize_currency(value: str) -> str:
+    """ISO code for a currency written as a code, symbol or name; anything else is returned unchanged."""
     text = str(value).strip()
+    # A supported ISO code anywhere in the text wins ("Dollars (USD)"). Only codes with an FX rate count, so
+    # an ordinary three-letter word ("the euro", "Yen") is never mistaken for a code.
+    for token in re.findall(r"\b[A-Za-z]{3}\b", text):
+        if token.upper() in fx_table():
+            return token.upper()
     if text in _CURRENCY_SYMBOLS:
         return _CURRENCY_SYMBOLS[text]
-    match = re.search(r"\b[A-Za-z]{3}\b", text)
-    return match.group(0).upper() if match else value
+    for pattern, code in _CURRENCY_NAMES:
+        if pattern.search(text):
+            return code
+    return _BARE_CURRENCY_WORDS.get(text.strip(".,").lower(), value)
 
 
 def normalize_incoterm(value: str) -> str:

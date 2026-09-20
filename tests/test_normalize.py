@@ -25,9 +25,28 @@ def test_countries(raw, expected):
     assert normalize_country(raw) == expected
 
 
-@pytest.mark.parametrize("raw, expected", [("$", "USD"), ("€", "EUR"), ("eur", "EUR"), ("USD", "USD")])
+@pytest.mark.parametrize("raw, expected", [
+    ("$", "USD"), ("€", "EUR"), ("eur", "EUR"), ("USD", "USD"),
+    ("US Dollars", "USD"), ("United States Dollars", "USD"), ("Euro", "EUR"), ("Euros", "EUR"),
+    ("Mexican pesos", "MXN"), ("Canadian dollars", "CAD"), ("the euro", "EUR"), ("Yen", "JPY"),
+    ("Dollars (USD)", "USD"), ("Dollars", "USD"), ("pounds sterling", "GBP"), ("Renminbi", "CNY"),
+    ("Atlantean shells", "Atlantean shells"),
+])
 def test_currency(raw, expected):
     assert normalize_currency(raw) == expected
+
+
+def test_currency_does_not_take_the_first_three_letter_word():
+    """The old regex turned 'the euro' into 'THE': an unknown currency that reached the comparison."""
+    assert normalize_currency("the euro") != "THE"
+    assert normalize_currency("Yen") != "YEN"
+
+
+@pytest.mark.parametrize("raw", ["Australian dollars", "Philippine pesos", "Egyptian pounds", "Pakistani rupees"])
+def test_ambiguous_currency_words_are_not_guessed(raw):
+    """A bare 'dollars' means USD only when it is the whole value; another nation's dollar must stay unknown
+    so the gate and the UNKNOWN_CURRENCY rule catch it instead of costing it at the wrong FX rate."""
+    assert normalize_currency(raw) == raw
 
 
 @pytest.mark.parametrize("raw, expected", [("FOB Ningbo", "FOB"), ("Delivered DAP Charlotte", "DAP"),
