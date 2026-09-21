@@ -74,5 +74,10 @@ borderColor = "#2c2c2a"
 [server]
 maxUploadSize = 20
 
+# "viewer" hides the Deploy button and developer options but keeps the menu with the light/dark switch.
+# ("minimal" removes the menu altogether, which would leave the dark theme reachable only through the OS setting.)
+[client]
+toolbarMode = "viewer"
+
 [browser]
 gatherUsageStats = false

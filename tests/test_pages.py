@@ -173,3 +173,35 @@ def test_every_page_renders_in_every_state(event_id, rfq, script, state):
         award_demo_event(event_id, rfq)
     at = run_page(script, None if state == "empty" else event_id)
     assert not at.exception, at.exception
+
+
+# --- Audit 2: tables that fit, one label per supplier, sidebar order -----------------------------------
+def test_review_grid_has_no_source_column_and_explains_an_empty_tier_editor(event_id, samples, rfq):
+    quote = copy.deepcopy(samples["jadeport"]["quote"])
+    quote["price_tiers"] = []
+    quote_id = add_quote(event_id, samples["jadeport"], rfq, quote)
+    at = run_page("views/2_Review_Approve.py", event_id, review_quote=quote_id)
+    assert not at.exception, at.exception
+    assert any(c.value.startswith("No quantity price breaks") for c in at.caption)
+    assert any(c.value == samples["jadeport"]["filename"] for c in at.caption)  # filename under "Source document"
+    picker = next(s for s in at.selectbox if s.label.startswith("Quote to review"))
+    assert picker.options[0].startswith("Jadeport Foundry · Needs review · ")  # supplier first, plain text
+
+
+def test_comparison_shows_a_ranking_table_that_fits_and_keeps_the_full_csv(event_id, rfq):
+    load_demo_event(event_id, rfq)
+    for q in db.list_quotes(event_id):
+        db.set_quote_status(q["id"], "approved", "tester", event_id, "")
+    at = run_page("views/3_Comparison.py", event_id)
+    assert not at.exception, at.exception
+    ranking = next(df.value for df in at.dataframe if "Rank" in df.value.columns)
+    assert list(ranking.columns) == ["Rank", "Supplier", "Risk flags", "Score", "Quoted unit", "Landed / unit",
+                                     "Landed total", "Lead time (wks)"]
+    components = next(df.value for df in at.dataframe if "Duty" in df.value.columns)
+    assert {"Unit USD", "Tooling", "Freight", "Terms adj.", "Cost", "Lead", "Terms", "Risk score"} <= set(components.columns)
+    # One spelling per supplier: the short display name, never the ALL-CAPS letterhead.
+    assert "Jadeport Foundry" in set(ranking["Supplier"]) and "JADEPORT FOUNDRY CO., LTD." not in set(ranking["Supplier"])
+    assert not any("JADEPORT" in m.value for m in at.markdown)
+    # The scoring weights render inside the sidebar, above its footer note.
+    sidebar_labels = [s.label for s in at.sidebar.slider]
+    assert sidebar_labels == ["Landed cost", "Lead time", "Commercial terms", "Risk (open flags)"]

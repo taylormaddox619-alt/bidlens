@@ -17,6 +17,31 @@ ui.sidebar()
 ui.page_header("AI Scorecard", ui.PAGE_ICON["views/4_AI_Scorecard.py"],
                "Tracks adoption and operating results, not just activity. Figures reflect usage of this app instance.")
 
+
+
+def card(column, label: str, value, **kwargs) -> None:
+    """A metric as a bordered card, so each row of figures reads as a group rather than loose numbers."""
+    column.metric(label, value, border=True, **kwargs)
+
+
+def detail_summary(raw: str) -> str:
+    """The part of an audit entry's JSON detail a person wants to read: the file, the note, or the fields."""
+    try:
+        detail = json.loads(raw or "{}")
+    except ValueError:
+        return raw or ""
+    if not isinstance(detail, dict):
+        return str(detail)
+    for key in ("filename", "note", "reason", "event_name", "supplier"):
+        if detail.get(key):
+            return str(detail[key])
+    if detail.get("fields"):
+        return ", ".join(detail["fields"])
+    if "documents" in detail:
+        return f"{detail['documents']} documents"
+    return ""
+
+
 data = db.scorecard_data()
 events, quotes, edits, runs, awards = (data[k] for k in ("events", "quotes", "edits", "runs", "awards"))
 
@@ -43,17 +68,17 @@ extract_cost = sum(r["cost_usd"] or 0 for r in live_extract_runs)
 
 st.markdown("#### Adoption")
 a1, a2, a3, a4 = st.columns(4)
-a1.metric("Bid events", len(events))
-a2.metric("Quotes processed", len(quotes))
-a3.metric("Quotes reviewed by a buyer", len(reviewed))
-a4.metric("Awards recorded", len(awards))
+card(a1, "Bid events", len(events))
+card(a2, "Quotes processed", len(quotes))
+card(a3, "Quotes reviewed by a buyer", len(reviewed))
+card(a4, "Awards recorded", len(awards))
 
 st.markdown("#### Quality")
 q1, q2, q3, q4 = st.columns(4)
-q1.metric("Extraction success", f"{len(extracted) / len(quotes):.0%}", help="Quotes with a valid structured extraction")
-q2.metric("Field edit rate", f"{edit_rate:.1%}", help="Share of extracted fields a buyer corrected. Lower = more accurate")
-q3.metric("Quotes needing a correction", f"{len(edited_quotes)} / {len(extracted)}")
-q4.metric("Quotes with high-severity exceptions", f"{flagged_high} / {len(quotes)}")
+card(q1, "Extraction success", f"{len(extracted) / len(quotes):.0%}", help="Quotes with a valid structured extraction")
+card(q2, "Field edit rate", f"{edit_rate:.1%}", help="Share of extracted fields a buyer corrected. Lower = more accurate")
+card(q3, "Quotes needing a correction", f"{len(edited_quotes)} / {len(extracted)}")
+card(q4, "Quotes with high-severity exceptions", f"{flagged_high} / {len(quotes)}")
 
 eval_path = config.EVALS_DIR / "results.json"
 ev = json.loads(eval_path.read_text(encoding="utf-8")) if eval_path.exists() else None
@@ -64,20 +89,20 @@ if ev is None:
 if ev:
     st.markdown("#### Offline evaluation (labeled ground truth)")
     e1, e2, e3, e4 = st.columns(4)
-    e1.metric("Field accuracy", f"{ev['field_accuracy']:.1%}")
-    e2.metric("Citations verified", f"{ev['citation_rate']:.1%}")
-    e3.metric("Exception recall", f"{ev['flag_recall']:.0%}")
-    e4.metric("Exception precision", f"{ev['flag_precision']:.0%}")
+    card(e1, "Field accuracy", f"{ev['field_accuracy']:.1%}")
+    card(e2, "Citations verified", f"{ev['citation_rate']:.1%}")
+    card(e3, "Exception recall", f"{ev['flag_recall']:.0%}")
+    card(e4, "Exception precision", f"{ev['flag_precision']:.0%}")
     if "latency_p50_s" in ev:  # written by the multi-trial harness
         f1, f2, f3, f4 = st.columns(4)
-        f1.metric("Cost per document", f"${ev['cost_per_document_usd']:.4f}")
-        f2.metric("Latency p50 / p95", f"{ev['latency_p50_s']:.1f} s / {ev['latency_p95_s']:.1f} s",
+        card(f1, "Cost per document", f"${ev['cost_per_document_usd']:.4f}")
+        card(f2, "Latency p50 / p95", f"{ev['latency_p50_s']:.1f} s / {ev['latency_p95_s']:.1f} s",
                   help=f"Over {ev['n']} document runs ({ev['documents']} documents × {ev['trials']} trials)")
-        f3.metric("Prompt cache hit rate", f"{ev['cache_hit_rate']:.0%}",
+        card(f3, "Prompt cache hit rate", f"{ev['cache_hit_rate']:.0%}",
                   help="Share of input tokens served from the prompt cache (0.1× the input price)")
         g = ev["gate"]
         fired = g["fired_wrong"] + g["fired_ok"]
-        f4.metric("Quality gate fired", f"{fired} / {g['n']}",
+        card(f4, "Quality gate fired", f"{fired} / {g['n']}",
                   help=f"Escalation trigger. Caught {g['fired_wrong']} wrong extraction(s), missed {g['quiet_wrong']}, "
                        f"fired needlessly {g['fired_ok']} time(s).")
     spread = ev.get("field_accuracy_spread")
@@ -104,14 +129,14 @@ if history_path.exists() and history_path.stat().st_size:
 
 st.markdown("#### Business value")
 b1, b2, b3, b4 = st.columns(4)
-b1.metric("Buyer hours saved (est.)", f"{hours_saved:.1f}",
+card(b1, "Buyer hours saved (est.)", f"{hours_saved:.1f}",
           help=f"Reviewed quotes × ({config.MANUAL_MINUTES_PER_QUOTE} min manual − "
                f"{config.ASSISTED_MINUTES_PER_QUOTE} min assisted). Baselines are assumptions to validate with users.")
-b2.metric("Cost avoided vs. lowest unit price", ui.money(cost_avoided),
+card(b2, "Cost avoided vs. lowest unit price", ui.money(cost_avoided),
           help="Landed cost of the lowest-unit-price bid minus landed cost of the awarded bid")
-b3.metric("Live API spend", f"${live_cost:.2f}")
+card(b3, "Live API spend", f"${live_cost:.2f}")
 live_quotes = {r["quote_id"] for r in live_extract_runs}
-b4.metric("API cost per quote", f"${extract_cost / len(live_quotes):.3f}" if live_quotes else "n/a (demo)",
+card(b4, "API cost per quote", f"${extract_cost / len(live_quotes):.3f}" if live_quotes else "n/a (demo)",
           help="Extraction calls for a quote, including escalations, divided by quotes processed live. Memo drafts "
                "and AI-generated test quotes count toward Live API spend but not here.")
 
@@ -124,7 +149,7 @@ st.markdown("#### Model routing")
 first_pass = [r for r in live_runs if r["purpose"] == "extract"]
 escalations = [r for r in live_runs if r["purpose"] == "extract_escalation"]
 r1, r2 = st.columns([1, 2])
-r1.metric("Extractions escalated to stronger model",
+card(r1, "Extractions escalated to stronger model",
           f"{len(escalations) / len(first_pass):.0%}" if first_pass else "n/a (demo)",
           help="Share of first-pass extractions that failed automatic checks (missing citations, "
                "low confidence on required fields, schema failure) and were re-run on the escalation model")
@@ -170,14 +195,26 @@ with r2:
                    f"when checks fail; memos on `{routes['memo']}`. Spend by model appears after live runs.")
 
 st.markdown("#### Model runs")
+TIME_COLUMN = st.column_config.DatetimeColumn("Time (UTC)", format="YYYY-MM-DD HH:mm")
 if extract_runs or runs:
     df = pd.DataFrame(runs)[["ts", "purpose", "source", "model", "prompt_version", "input_tokens",
                              "output_tokens", "cost_usd", "latency_s", "status", "error"]]
+    text_cols = ["purpose", "source", "model", "prompt_version", "status", "error"]
+    df[text_cols] = df[text_cols].fillna("")  # numeric columns keep NaN so their number formats still apply
     st.dataframe(df.sort_values("ts", ascending=False), hide_index=True, width="stretch",
-                 column_config={"cost_usd": st.column_config.NumberColumn(format="$%.4f"),
-                                "latency_s": st.column_config.NumberColumn(format="%.1f s")})
+                 column_config={"ts": TIME_COLUMN, "purpose": "Purpose", "source": "Source", "model": "Model",
+                                "prompt_version": "Prompt", "input_tokens": "In tokens",
+                                "output_tokens": "Out tokens",
+                                "cost_usd": st.column_config.NumberColumn("Cost", format="$%.4f"),
+                                "latency_s": st.column_config.NumberColumn("Latency", format="%.1f s"),
+                                "status": "Status", "error": "Error"})
 
 st.markdown("#### Audit log")
 log = pd.DataFrame(db.audit_log(limit=300))
 if not log.empty:
-    st.dataframe(log[["ts", "actor", "action", "event_id", "quote_id", "detail"]], hide_index=True, width="stretch")
+    log = log[["ts", "actor", "action", "event_id", "quote_id", "detail"]].copy()
+    log["detail"] = log["detail"].map(detail_summary)
+    log["action"] = log["action"].str.replace("_", " ")
+    st.dataframe(log.fillna(""), hide_index=True, width="stretch",
+                 column_config={"ts": TIME_COLUMN, "actor": "Who", "action": "Action", "event_id": "Event",
+                                "quote_id": "Quote", "detail": "Detail"})
