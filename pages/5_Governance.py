@@ -12,7 +12,7 @@ ui.sidebar()
 st.title("🛡️ Governance")
 st.caption("Solution inventory entry, controls, and limitations, kept in version control alongside the code.")
 
-st.markdown((config.DOCS_DIR / "GOVERNANCE.md").read_text(encoding="utf-8"))
+st.markdown(ui.md((config.DOCS_DIR / "GOVERNANCE.md").read_text(encoding="utf-8")))  # "$0.01 ... $0.03" is not math
 
 with st.expander("Current extraction prompt"):
     st.code((config.PROMPTS_DIR / f"{config.EXTRACT_PROMPT_VERSION}.md").read_text(encoding="utf-8"),
