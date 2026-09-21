@@ -2,6 +2,7 @@
 
 import random
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 
@@ -113,3 +114,27 @@ def test_generation_workflow_end_to_end_without_api(tmp_path, monkeypatch, rfq_d
 
     workflow.generate_test_quotes(event_id, rfq, "key", "tester", privileged=True)
     assert db.public_generations_today() == before + 1  # passcode holders don't use the public allowance
+
+
+@pytest.mark.parametrize("model, expects_fallback", [("claude-opus-5", True), ("claude-sonnet-5", False)])
+def test_writer_uses_the_beta_endpoint_so_fallback_models_work(monkeypatch, rfq_dict, model, expects_fallback):
+    """The non-beta messages.parse() rejects `betas`/`fallbacks` with a TypeError, as the real SDK does here."""
+    supplier = suppliers(rfq_dict, 1)[0]
+    calls = []
+
+    class BetaMessages:
+        def parse(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(usage=SimpleNamespace(input_tokens=900, output_tokens=600), model=kwargs["model"],
+                                   parsed_output=fake_document(supplier))
+
+    class Messages:
+        def parse(self, *, model, max_tokens, system, messages, output_format, output_config=None):
+            raise AssertionError("write_document must call client.beta.messages.parse")
+
+    client = SimpleNamespace(messages=Messages(), beta=SimpleNamespace(messages=BetaMessages()))
+    monkeypatch.setitem(config.MODEL_ROUTES, "generate", model)
+    generate.write_document(client, supplier)
+    assert supplier.document and supplier.writer_meta["status"] == "ok"
+    assert ("betas" in calls[0], "fallbacks" in calls[0]) == (expects_fallback, expects_fallback)
+    assert calls[0]["output_format"] is generate.GeneratedDocument
