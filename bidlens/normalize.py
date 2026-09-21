@@ -55,10 +55,10 @@ def normalize_date(value: str) -> str:
 def normalize_country(value: str) -> str:
     text = re.sub(r"\(.*?\)", "", str(value)).strip().strip(".,")
     text = re.sub(r"^(made in|origin:?|country of origin:?)\s+", "", text, flags=re.IGNORECASE).strip()
+    if text.lower() in _COUNTRY_ALIASES:  # before the two-letter shortcut: "UK" is an alias for GB, not a code
+        return _COUNTRY_ALIASES[text.lower()]
     if re.fullmatch(r"[A-Za-z]{2}", text):
         return text.upper()
-    if text.lower() in _COUNTRY_ALIASES:
-        return _COUNTRY_ALIASES[text.lower()]
     return country_code(text) or value
 
 

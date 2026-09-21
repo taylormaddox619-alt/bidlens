@@ -20,6 +20,7 @@ def test_dates(raw, expected):
 @pytest.mark.parametrize("raw, expected", [
     ("China", "CN"), ("Germany", "DE"), ("USA", "US"), ("Mexico (USMCA qualifying)", "MX"),
     ("Deutschland (Germany)", "DE"), ("Made in USA", "US"), ("cn", "CN"), ("Atlantis", "Atlantis"),
+    ("UK", "GB"), ("uk", "GB"),  # two letters, but not the ISO code: the alias must win over the shortcut
 ])
 def test_countries(raw, expected):
     assert normalize_country(raw) == expected
