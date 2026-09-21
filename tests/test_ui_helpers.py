@@ -84,12 +84,16 @@ def test_comparison_labels_are_unique_per_quote():
     rows = [{"quote_id": "a", "supplier": "Acme Inc.", "filename": "acme.pdf"},
             {"quote_id": "b", "supplier": "Acme Inc.", "filename": "acme_rev2.pdf"},
             {"quote_id": "c", "supplier": "Borealis GmbH", "filename": "b.pdf"}]
-    assert ui.comparison_labels(rows) == {"a": "Acme Inc. (acme.pdf)", "b": "Acme Inc. (acme_rev2.pdf)",
-                                          "c": "Borealis GmbH"}
+    # Short display names, so a supplier is spelled the same in tiles, chart, tables and the award picker.
+    assert ui.comparison_labels(rows) == {"a": "Acme (acme.pdf)", "b": "Acme (acme_rev2.pdf)", "c": "Borealis"}
     # Same supplier and same filename (different content): fall back to the quote id.
     rows[1]["filename"] = "acme.pdf"
     labels = ui.comparison_labels(rows)
-    assert len(set(labels.values())) == 3 and labels["a"] == "Acme Inc. (acme.pdf) (a)"
+    assert len(set(labels.values())) == 3 and labels["a"] == "Acme (acme.pdf) (a)"
+    # Different suppliers whose short names collide ("Acme Inc." / "ACME LLC") must still be told apart.
+    clash = [{"quote_id": "x", "supplier": "Acme Inc.", "filename": "x.pdf"},
+             {"quote_id": "y", "supplier": "ACME LLC", "filename": "y.pdf"}]
+    assert ui.comparison_labels(clash) == {"x": "Acme (x.pdf)", "y": "Acme (y.pdf)"}
 
 
 # --- Navigation, branding and theme ---------------------------------------------------------------------

@@ -166,11 +166,15 @@ def sidebar() -> dict:
             st.caption(f"Extraction: `{routes['extract']}` → `{routes['extract_escalation']}` if checks fail  \n"
                        f"Memo: `{routes['memo']}`  \nPrompt: `{config.EXTRACT_PROMPT_VERSION}`")
 
+        # Pages put their own sidebar controls here (Comparison: the scoring weights), so the note below stays
+        # the last thing in the sidebar on every page.
+        slot = st.container()
+        st.divider()
         st.caption(":material/info: Demo app with fictional data. Do not upload confidential or real supplier "
                    "documents.")
 
     return {"mode": effective_mode, "api_key": api_key, "actor": st.session_state["actor"] or "anonymous",
-            "event_id": event_id}
+            "event_id": event_id, "sidebar_slot": slot}
 
 
 def nav_link(page: str, label: str, icon: str | None = None) -> None:
@@ -224,8 +228,10 @@ def quote_supplier(quote: dict) -> str:
 def comparison_labels(rows: list[dict]) -> dict[str, str]:
     """{quote_id: label} that is unique per comparison row.
 
-    The supplier name alone when no other row shares it. Two quotes from one supplier are legitimate (a
-    revised quote), so those get the filename appended, and the quote id as well if that still collides.
+    The supplier's short display name ("Jadeport Foundry", not "JADEPORT FOUNDRY CO., LTD.") when no other row
+    shares it, so one supplier is spelled one way everywhere on the screen. Two quotes from one supplier are
+    legitimate (a revised quote), so those get the filename appended, and the quote id as well if that still
+    collides. Records (the award, the memo) keep the name as extracted.
     Charts, tables and the award picker key on this label; keyed on the bare name, duplicate suppliers
     had their bars summed and the award recorded against whichever quote came first.
     """
@@ -236,7 +242,8 @@ def comparison_labels(rows: list[dict]) -> dict[str, str]:
         return {qid: text if counts[text] == 1 else f"{text} ({suffix(qid)})" for qid, text in labels.items()}
 
     by_id = {r["quote_id"]: r for r in rows}
-    labels = distinct({qid: r["supplier"] for qid, r in by_id.items()}, lambda qid: by_id[qid]["filename"])
+    labels = distinct({qid: short_name(r["supplier"]) for qid, r in by_id.items()},
+                      lambda qid: by_id[qid]["filename"])
     return distinct(labels, lambda qid: qid)
 
 
