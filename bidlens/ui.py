@@ -24,6 +24,12 @@ STATUS_BADGE = {
     "rejected": "⛔ Rejected",
     "failed": "❌ Extraction failed",
 }
+# The same meanings for markdown contexts (headings, captions, alerts), as coloured Material icons that match
+# the navigation and stepper. The emoji above remain for table cells and widget labels, which are plain text.
+SEVERITY_MD = {"high": ":red[:material/error:]", "medium": ":orange[:material/warning:]",
+               "low": ":blue[:material/info:]", "none": ":green[:material/check_circle:]"}
+STATUS_TEXT = {"extracted": "Needs review", "approved": "Approved", "rejected": "Rejected",
+               "failed": "Extraction failed"}
 REVIEWED = ("approved", "rejected")
 PAGES = {"setup": "views/1_New_Bid_Event.py", "review": "views/2_Review_Approve.py",
          "compare": "views/3_Comparison.py", "scorecard": "views/4_AI_Scorecard.py"}
@@ -257,13 +263,21 @@ def risk_level(flags: list[dict]) -> str:
     return "high" if counts["high"] else "medium" if counts["medium"] else "none"
 
 
-def risk_badge(flags: list[dict], compact: bool = False) -> str:
+def risk_badge(flags: list[dict], compact: bool = False, markdown: bool = False) -> str:
+    """'🔴 1 high · 🟠 2 medium'. `markdown=True` uses Material icons; only for text rendered as markdown."""
     counts = flag_counts(flags)
-    parts = [f"{SEVERITY[level][0]}{'' if compact else ' '}{counts[level]}{'' if compact else ' ' + level}"
+    icon = SEVERITY_MD if markdown else {**SEVERITY_ICON, "none": "🟢"}
+    parts = [f"{icon[level]}{'' if compact else ' '}{counts[level]}{'' if compact else ' ' + level}"
              for level in ("high", "medium") if counts[level]]
     if not parts:
-        return "🟢" if compact else "🟢 No risks flagged"
+        return icon["none"] if compact else f"{icon['none']} No risks flagged"
     return (" " if compact else " · ").join(parts)
+
+
+def risk_summary(flags: list[dict]) -> str:
+    """Plain words for widget labels, which cannot render icons: '1 high, 2 medium' or 'no flags'."""
+    counts = flag_counts(flags)
+    return ", ".join(f"{counts[level]} {level}" for level in ("high", "medium") if counts[level]) or "no flags"
 
 
 # --- Workflow guidance (pure logic + rendering) --------------------------------------------------
@@ -287,16 +301,21 @@ def next_step(quotes: list[dict], award: dict | None) -> tuple[str, str]:
     return "scorecard", "View the AI Scorecard →"
 
 
+def go(page: str) -> None:
+    """Switch to another view; a no-op when the script runs outside the multipage app (tests)."""
+    try:
+        st.switch_page(page)
+    except Exception:
+        pass
+
+
 def next_step_button(quotes: list[dict], award: dict | None, current: str, key: str) -> None:
     """Primary button to the next step; hidden when the next step is the page you're already on."""
     page, text = next_step(quotes, award)
     if page == current:
         return
     if st.button(text, type="primary", key=key):
-        try:
-            st.switch_page(PAGES[page])
-        except Exception:  # outside the multipage app (tests)
-            pass
+        go(PAGES[page])
 
 
 def workflow_stepper(event_id: str, current: str, quotes: list[dict] | None = None) -> tuple[list[dict], dict | None]:
@@ -314,7 +333,8 @@ def workflow_stepper(event_id: str, current: str, quotes: list[dict] | None = No
          f"{p['total']} quote{'s' if p['total'] != 1 else ''} added" if p["total"] else "No quotes yet"),
         ("review", "2 · Review & approve", p["total"] > 0 and not p["pending"],
          ("All reviewed" if not p["pending"] else f"{p['reviewed']} of {p['total']} reviewed"
-          + (f" · 🔴 {high_risk} high-risk" if high_risk else "")) if p["total"] else "Waiting for quotes"),
+          + (f" · {SEVERITY_MD['high']} {high_risk} high-risk" if high_risk else "")) if p["total"]
+         else "Waiting for quotes"),
         ("compare", "3 · Compare & award", p["awarded"],
          f"Awarded to {short_name(award['supplier'])}" if award
          else "Ready" if p["total"] and not p["pending"] and p["approved"] >= 2 else "Locked until review is done"),
@@ -333,7 +353,8 @@ def workflow_stepper(event_id: str, current: str, quotes: list[dict] | None = No
 def render_flags(flags: list[dict]) -> None:
     """Exceptions grouped by severity in colored boxes, each with what to do about it."""
     if not flags:
-        st.success("🟢 **No risks flagged.** The rules found nothing to follow up on for this quote.")
+        st.success("**No risks flagged.** The rules found nothing to follow up on for this quote.",
+                   icon=":material/check_circle:")
         return
 
     def lines(level: str) -> str:
@@ -343,13 +364,16 @@ def render_flags(flags: list[dict]) -> None:
 
     counts = flag_counts(flags)
     if counts["high"]:
-        st.error(f"**🔴 High risk ({counts['high']}): resolve or explicitly accept before approving**\n\n{lines('high')}")
+        st.error(f"**High risk ({counts['high']}): resolve or explicitly accept before approving**\n\n{lines('high')}",
+                 icon=":material/error:")
     if counts["medium"]:
-        st.warning(f"**🟠 Medium risk ({counts['medium']}): check and follow up with the supplier**\n\n{lines('medium')}")
+        st.warning(f"**Medium risk ({counts['medium']}): check and follow up with the supplier**\n\n{lines('medium')}",
+                   icon=":material/warning:")
     if counts["low"]:
-        with st.expander(f"🔵 Info ({counts['low']})"):
+        with st.expander(f"Info ({counts['low']})", icon=":material/info:"):
             st.markdown(lines("low"))
 
 
 def severity_legend() -> str:
-    return " · ".join(f"{icon} **{name}**: {meaning}" for icon, name, meaning in SEVERITY.values())
+    """Markdown; every caller renders it with st.caption."""
+    return " · ".join(f"{SEVERITY_MD[level]} **{name}**: {meaning}" for level, (_, name, meaning) in SEVERITY.items())

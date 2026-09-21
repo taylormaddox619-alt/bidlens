@@ -38,7 +38,7 @@ if pending:
                f"{len(pending)} quote{'s' if len(pending) != 1 else ''} still need{'' if len(pending) != 1 else 's'} "
                "a decision:", icon=":material/lock:")
     for pq in sorted(pending, key=lambda x: ui.RISK_RANK[ui.risk_level(x["flags"])]):
-        st.markdown(f"- **{ui.quote_supplier(pq)}** · {ui.risk_badge(pq['flags'])}")
+        st.markdown(f"- **{ui.short_name(ui.quote_supplier(pq))}** · {ui.risk_badge(pq['flags'], markdown=True)}")
     st.stop()
 # Quotes approved before the review page checked for this can lack an FX rate or a usable price.
 excluded = workflow.excluded_from_comparison(event_id, rfq)
@@ -208,10 +208,10 @@ with st.expander("How each score was calculated"):
 
 # --- Memo & decision ----------------------------------------------------------------------
 st.divider()
-st.markdown(f"#### Award recommendation: {best['label']} · {ui.risk_badge(best['flags'])}")
+st.markdown(f"#### Award recommendation: {best['label']} · {ui.risk_badge(best['flags'], markdown=True)}")
 if any(f["severity"] == "high" for f in best["flags"]):
-    st.error("**🔴 The highest-scoring supplier has high-risk issues.** Close them, or choose another supplier "
-             "with a written justification, before recording the award.")
+    st.error("**The highest-scoring supplier has high-risk issues.** Close them, or choose another supplier "
+             "with a written justification, before recording the award.", icon=":material/error:")
 ui.render_flags([f for f in best["flags"] if f["severity"] in ("high", "medium")])
 
 memo_key = f"memo_{event_id}"

@@ -135,3 +135,20 @@ def test_page_titles_use_material_icons_not_emoji():
     for path in (ROOT / "views").glob("*.py"):
         source = path.read_text(encoding="utf-8")
         assert "ui.page_header(" in source and "st.title(" not in source, path.name
+
+
+def test_risk_badge_has_a_markdown_variant_and_a_plain_summary():
+    flags = [{"severity": "high"}, {"severity": "medium"}, {"severity": "medium"}]
+    assert ui.risk_badge(flags) == "🔴 1 high · 🟠 2 medium"  # plain text: table cells and widget labels
+    rich = ui.risk_badge(flags, markdown=True)
+    assert ":material/error:" in rich and ":material/warning:" in rich and "🔴" not in rich
+    assert ui.risk_badge([], markdown=True) == ":green[:material/check_circle:] No risks flagged"
+    assert ui.risk_summary(flags) == "1 high, 2 medium" and ui.risk_summary([]) == "no flags"
+    assert "🔴" not in ui.severity_legend() and ":material/" in ui.severity_legend()
+
+
+def test_toolbar_hides_developer_options_but_keeps_the_theme_menu():
+    import tomllib
+    from bidlens.config import ROOT
+    cfg = tomllib.loads((ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8"))
+    assert cfg["client"]["toolbarMode"] == "viewer"  # "minimal" also removes the menu that switches light/dark
