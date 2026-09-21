@@ -27,6 +27,11 @@ def seeded(tmp_path, monkeypatch, rfq, samples):
                     "cache_read_tokens": 700, "cost_usd": 0.018, "latency_s": 9.0}, "extract", event_id, quote_id)
     db.log_llm_run({**base, "model": "claude-opus-5", "input_tokens": 3500, "cost_usd": 0.05, "latency_s": 14.0},
                    "extract_escalation", event_id, quote_id)
+    # Spend that is not extraction: a memo draft (no quote) and a test-quote writer call (tied to the quote).
+    db.log_llm_run({**base, "model": "claude-sonnet-5", "prompt_version": "memo_v1", "input_tokens": 2000,
+                    "cost_usd": 0.03, "latency_s": 8.0}, "memo", event_id)
+    db.log_llm_run({**base, "model": "claude-sonnet-5", "prompt_version": "generate_v1", "input_tokens": 900,
+                    "cost_usd": 0.04, "latency_s": 6.0}, "generate", event_id, quote_id)
     summary = {"config": "routed", "run_at": "2026-09-15 20:00 UTC", "source": "live Claude call",
                "model": "claude-sonnet-5", "prompt_version": "extract_v2", "effort": "low", "documents": 4,
                "trials": 3, "n": 12, "field_accuracy": 0.99, "field_accuracy_spread": {"mean": 0.99, "min": 0.97, "max": 1.0},
@@ -54,3 +59,11 @@ def test_scorecard_renders_live_routing_cost_split_and_history(seeded):
     assert any("cache_hit_rate" in df.value.columns for df in tables)     # routing table by model
     assert any("component" in df.value.columns for df in tables)          # cost split
     assert any("Eval history" in e.label for e in at.expander)
+
+
+def test_cost_per_quote_counts_extraction_spend_only(seeded):
+    at = AppTest.from_file(str(ROOT / "pages" / "4_AI_Scorecard.py"), default_timeout=60).run()
+    assert not at.exception, at.exception
+    metric = {m.label: m.value for m in at.metric}
+    assert metric["Live API spend"] == "$0.16"         # everything: 0.02 + 0.018 + 0.05 extraction, 0.03 memo, 0.04 writer
+    assert metric["API cost per quote"] == "$0.088"    # extraction and escalation only, over the 1 quote extracted live
