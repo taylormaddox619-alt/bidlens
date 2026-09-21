@@ -49,7 +49,7 @@ def seeded(tmp_path, monkeypatch, rfq, samples):
 
 
 def test_scorecard_renders_live_routing_cost_split_and_history(seeded):
-    at = AppTest.from_file(str(ROOT / "pages" / "4_AI_Scorecard.py"), default_timeout=60).run()
+    at = AppTest.from_file(str(ROOT / "views" / "4_AI_Scorecard.py"), default_timeout=60).run()
     assert not at.exception, at.exception
     labels = {m.label for m in at.metric}
     assert {"Latency p50 / p95", "Prompt cache hit rate", "Quality gate fired", "Cost per document"} <= labels
@@ -62,7 +62,7 @@ def test_scorecard_renders_live_routing_cost_split_and_history(seeded):
 
 
 def test_cost_per_quote_counts_extraction_spend_only(seeded):
-    at = AppTest.from_file(str(ROOT / "pages" / "4_AI_Scorecard.py"), default_timeout=60).run()
+    at = AppTest.from_file(str(ROOT / "views" / "4_AI_Scorecard.py"), default_timeout=60).run()
     assert not at.exception, at.exception
     metric = {m.label: m.value for m in at.metric}
     assert metric["Live API spend"] == "$0.16"         # everything: 0.02 + 0.018 + 0.05 extraction, 0.03 memo, 0.04 writer

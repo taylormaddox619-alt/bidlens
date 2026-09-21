@@ -11,11 +11,11 @@ ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.p
 from bidlens import config, db, ui
 from bidlens.schemas import FIELD_SPECS
 
-ui.setup_page("AI Scorecard", "📊")
+ui.setup_page("AI Scorecard")
 ui.sidebar()
 
-st.title("📊 AI Scorecard")
-st.caption("Tracks adoption and operating results, not just activity. Figures reflect usage of this app instance.")
+ui.page_header("AI Scorecard", ui.PAGE_ICON["views/4_AI_Scorecard.py"],
+               "Tracks adoption and operating results, not just activity. Figures reflect usage of this app instance.")
 
 data = db.scorecard_data()
 events, quotes, edits, runs, awards = (data[k] for k in ("events", "quotes", "edits", "runs", "awards"))

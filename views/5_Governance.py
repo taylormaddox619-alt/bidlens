@@ -6,11 +6,11 @@ ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.p
 
 from bidlens import config, ui
 
-ui.setup_page("Governance", "🛡️")
+ui.setup_page("Governance")
 ui.sidebar()
 
-st.title("🛡️ Governance")
-st.caption("Solution inventory entry, controls, and limitations, kept in version control alongside the code.")
+ui.page_header("Governance", ui.PAGE_ICON["views/5_Governance.py"],
+               "Solution inventory entry, controls, and limitations, kept in version control alongside the code.")
 
 st.markdown(ui.md((config.DOCS_DIR / "GOVERNANCE.md").read_text(encoding="utf-8")))  # "$0.01 ... $0.03" is not math
 

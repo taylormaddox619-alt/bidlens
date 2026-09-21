@@ -25,8 +25,8 @@ STATUS_BADGE = {
     "failed": "❌ Extraction failed",
 }
 REVIEWED = ("approved", "rejected")
-PAGES = {"setup": "pages/1_New_Bid_Event.py", "review": "pages/2_Review_Approve.py",
-         "compare": "pages/3_Comparison.py", "scorecard": "pages/4_AI_Scorecard.py"}
+PAGES = {"setup": "views/1_New_Bid_Event.py", "review": "views/2_Review_Approve.py",
+         "compare": "views/3_Comparison.py", "scorecard": "views/4_AI_Scorecard.py"}
 
 
 def request_scroll_to_top() -> None:
@@ -71,8 +71,56 @@ def _secret(name: str) -> str | None:
     return value or os.environ.get(name)
 
 
-def setup_page(title: str, icon: str = "📑") -> None:
-    st.set_page_config(page_title=f"{title} · BidLens", page_icon=icon, layout="wide")
+BRAND_ICON = ":material/request_quote:"  # browser tab icon, the same on every page
+# (file, title, Material icon) per sidebar section. Home.py builds the navigation from this, and the page
+# headers reuse the icons, so a page looks the same in the menu and at the top of its own screen.
+NAV = {
+    "": [("views/0_Home.py", "Home", ":material/home:")],
+    "Workflow": [("views/1_New_Bid_Event.py", "New Bid Event", ":material/note_add:"),
+                 ("views/2_Review_Approve.py", "Review & Approve", ":material/fact_check:"),
+                 ("views/3_Comparison.py", "Comparison", ":material/balance:")],
+    "Insight": [("views/4_AI_Scorecard.py", "AI Scorecard", ":material/monitoring:"),
+                ("views/5_Governance.py", "Governance", ":material/verified_user:")],
+}
+PAGE_ICON = {path: icon for group in NAV.values() for path, _, icon in group}
+
+# Chart chrome per theme. The categorical slots and the two surfaces are a validated set (adjacent-pair
+# colour-vision separation and contrast were checked against exactly these surfaces), which is why the app
+# backgrounds in .streamlit/config.toml are the same two colours. Change them together or not at all.
+_CHART_TOKENS = {
+    "light": {"surface": "#fcfcfb", "ink": "#0b0b0b", "ink_secondary": "#52514e", "muted": "#898781",
+              "grid": "#e1e0d9", "categorical": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]},
+    "dark": {"surface": "#1a1a19", "ink": "#ffffff", "ink_secondary": "#c3c2b7", "muted": "#898781",
+             "grid": "#2c2c2a", "categorical": ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181"]},
+}
+
+
+def theme_type() -> str:
+    """'light' or 'dark' for the viewer's active theme; 'light' when unknown (first run, tests)."""
+    try:
+        active = st.context.theme.type
+    except Exception:
+        active = None
+    return active if active in _CHART_TOKENS else "light"
+
+
+def chart_tokens() -> dict:
+    return _CHART_TOKENS[theme_type()]
+
+
+def setup_page(title: str) -> None:
+    st.set_page_config(page_title=f"{title} · BidLens", page_icon=BRAND_ICON, layout="wide")
+    try:
+        st.logo(str(config.ROOT / "assets" / f"logo_{theme_type()}.svg"), size="large")
+    except Exception:  # a missing or unreadable logo must never take a page down
+        pass
+
+
+def page_header(title: str, icon: str, caption: str | None = None) -> None:
+    """The same title treatment on every page: Material icon, title, one-line caption."""
+    st.title(f"{icon} {title}")
+    if caption:
+        st.caption(caption)
 
 
 def sidebar() -> dict:
@@ -81,7 +129,16 @@ def sidebar() -> dict:
     passcode = _secret("BIDLENS_LIVE_PASSCODE")
 
     with st.sidebar:
-        st.markdown("### BidLens")
+        events = db.list_events()
+        event_id = None
+        if events:
+            labels = {e["id"]: f"{e['name']} ({e['status']})" for e in events}
+            ids = list(labels)
+            current = st.session_state.get("event_id")
+            index = ids.index(current) if current in ids else 0
+            event_id = st.selectbox("Bid event", ids, index=index, format_func=labels.get)
+            st.session_state["event_id"] = event_id
+
         st.session_state.setdefault("actor", "demo.buyer")
         st.text_input("Your name (for the audit log)", key="actor")
 
@@ -105,28 +162,20 @@ def sidebar() -> dict:
             st.caption("Live mode is off: no ANTHROPIC_API_KEY configured.")
         effective_mode = "live" if (mode == "Live" and live_possible and live_unlocked) else "demo"
         routes = config.MODEL_ROUTES
-        st.caption(f"Extraction: `{routes['extract']}` → `{routes['extract_escalation']}` if checks fail · "
-                   f"Memo: `{routes['memo']}` · prompt `{config.EXTRACT_PROMPT_VERSION}`")
+        with st.expander("Model routing", icon=":material/alt_route:"):
+            st.caption(f"Extraction: `{routes['extract']}` → `{routes['extract_escalation']}` if checks fail  \n"
+                       f"Memo: `{routes['memo']}`  \nPrompt: `{config.EXTRACT_PROMPT_VERSION}`")
 
-        events = db.list_events()
-        event_id = None
-        if events:
-            labels = {e["id"]: f"{e['name']} ({e['status']})" for e in events}
-            ids = list(labels)
-            current = st.session_state.get("event_id")
-            index = ids.index(current) if current in ids else 0
-            event_id = st.selectbox("Bid event", ids, index=index, format_func=labels.get)
-            st.session_state["event_id"] = event_id
-
-        st.divider()
-        st.caption("⚠️ Demo app with fictional data. Do not upload confidential or real supplier documents.")
+        st.caption(":material/info: Demo app with fictional data. Do not upload confidential or real supplier "
+                   "documents.")
 
     return {"mode": effective_mode, "api_key": api_key, "actor": st.session_state["actor"] or "anonymous",
             "event_id": event_id}
 
 
-def nav_link(page: str, label: str, icon: str = "➡️") -> None:
+def nav_link(page: str, label: str, icon: str | None = None) -> None:
     """Page link that degrades gracefully when a page runs outside the multipage app (e.g. tests)."""
+    icon = icon or PAGE_ICON.get(page, ":material/arrow_forward:")
     try:
         st.page_link(page, label=label, icon=icon)
     except Exception:
@@ -266,7 +315,8 @@ def workflow_stepper(event_id: str, current: str, quotes: list[dict] | None = No
     ]
     with st.container(border=True):
         for col, (key, title, done, status) in zip(st.columns(4), steps):
-            icon = "✅" if done else "👉" if key == current else "⬜"
+            icon = (":green[:material/check_circle:]" if done else ":blue[:material/arrow_circle_right:]"
+                    if key == current else ":gray[:material/radio_button_unchecked:]")
             col.markdown(f"{icon} **{title}**" if key == current else f"{icon} {title}")
             col.caption(status)
         next_step_button(quotes, award, current, key=f"next_top_{current}")

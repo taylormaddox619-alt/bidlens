@@ -11,10 +11,10 @@ from bidlens.reference import fx_as_of
 from bidlens.rules import label
 from bidlens.scoring import DEFAULT_WEIGHTS
 
-ui.setup_page("Comparison", "⚖️")
+ui.setup_page("Comparison")
 ctx = ui.sidebar()
 
-st.title("⚖️ Bid Comparison")
+ui.page_header("Bid Comparison", ui.PAGE_ICON["views/3_Comparison.py"])
 
 event_id = ctx["event_id"]
 if not event_id:
@@ -30,12 +30,13 @@ ui.workflow_stepper(event_id, "compare", quotes)
 
 # Guardrail: the comparison only uses buyer-verified data.
 if not quotes:
-    st.warning("🔒 **Comparison is locked:** this event has no quotes yet. Add them on New Bid Event.")
+    st.warning("**Comparison is locked:** this event has no quotes yet. Add them on New Bid Event.",
+               icon=":material/lock:")
     st.stop()
 if pending:
-    st.warning(f"🔒 **Comparison is locked until every quote is reviewed.** "
+    st.warning(f"**Comparison is locked until every quote is reviewed.** "
                f"{len(pending)} quote{'s' if len(pending) != 1 else ''} still need{'' if len(pending) != 1 else 's'} "
-               "a decision:")
+               "a decision:", icon=":material/lock:")
     for pq in sorted(pending, key=lambda x: ui.RISK_RANK[ui.risk_level(x["flags"])]):
         st.markdown(f"- **{ui.quote_supplier(pq)}** · {ui.risk_badge(pq['flags'])}")
     st.stop()
@@ -43,13 +44,14 @@ if pending:
 excluded = workflow.excluded_from_comparison(event_id, rfq)
 if excluded:
     st.warning(ui.md(
-        f"**⚠️ {len(excluded)} approved quote{'s are' if len(excluded) != 1 else ' is'} left out of this comparison** "
+        f"**{len(excluded)} approved quote{'s are' if len(excluded) != 1 else ' is'} left out of this comparison** "
         "because a landed cost cannot be computed. Reopen and fix, or reject:\n"
-        + "\n".join(f"- **{ui.display_name(x['supplier'])}** (`{x['filename']}`): {x['reason']}" for x in excluded)))
-    ui.nav_link("pages/2_Review_Approve.py", "Go to Review & Approve", "🔎")
+        + "\n".join(f"- **{ui.display_name(x['supplier'])}** (`{x['filename']}`): {x['reason']}" for x in excluded)),
+        icon=":material/warning:")
+    ui.nav_link("views/2_Review_Approve.py", "Go to Review & Approve")
 if len(approved) - len(excluded) < 2:
-    st.warning("🔒 **At least two approved quotes are needed for a comparison.** Reopen a rejected quote on "
-               "Review & Approve, or add more quotes on New Bid Event.")
+    st.warning("**At least two approved quotes are needed for a comparison.** Reopen a rejected quote on "
+               "Review & Approve, or add more quotes on New Bid Event.", icon=":material/lock:")
     st.stop()
 
 with st.sidebar:
@@ -86,8 +88,7 @@ tiles = [
 for col, (title, value, sub) in zip(st.columns(3), tiles):
     with col.container(border=True):
         st.caption(title)
-        st.markdown(ui.md(f"**<span style='font-size:1.35rem;line-height:1.25'>{value}</span>**"),
-                    unsafe_allow_html=True)
+        st.subheader(ui.md(value), anchor=False)  # a heading wraps long supplier names; st.metric would truncate them
         st.caption(ui.md(sub))
 
 if naive["quote_id"] != cheapest_landed["quote_id"]:
@@ -102,7 +103,8 @@ if naive["quote_id"] != cheapest_landed["quote_id"]:
 st.markdown("#### Landed cost per unit, by component")
 components = [("Goods", "goods_usd"), ("Tooling", "tooling_usd"), ("Freight", "freight_usd"),
               ("Duty / tariff", "duty_usd"), ("Payment terms", "terms_adjustment_usd")]
-palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]  # reference categorical slots 1-5
+tokens = ui.chart_tokens()  # colours for the viewer's theme: surface, ink, grid and the categorical slots
+palette = tokens["categorical"]
 order = [r["label"] for r in sorted(rows, key=lambda r: r["landed"].landed_per_unit_usd)]
 chart_rows = []
 for r in rows:
@@ -111,21 +113,22 @@ for r in rows:
                            "Per unit (USD)": getattr(r["landed"], attr) / rfq.quantity,
                            "Landed per unit": r["landed"].landed_per_unit_usd})
 chart_df = pd.DataFrame(chart_rows)
-bars = alt.Chart(chart_df).mark_bar(stroke="#fcfcfb", strokeWidth=2).encode(
-    y=alt.Y("Supplier:N", sort=order, title=None, axis=alt.Axis(labelLimit=260, labelColor="#52514e")),
+bars = alt.Chart(chart_df).mark_bar(stroke=tokens["surface"], strokeWidth=2).encode(
+    y=alt.Y("Supplier:N", sort=order, title=None, axis=alt.Axis(labelLimit=260, labelColor=tokens["ink_secondary"])),
     x=alt.X("sum(Per unit (USD)):Q", title="USD per unit",
             scale=alt.Scale(domain=[0, max(r["landed"].landed_per_unit_usd for r in rows) * 1.18]),
-            axis=alt.Axis(format="$,.0f", gridColor="#e1e0d9", labelColor="#898781", titleColor="#52514e")),
+            axis=alt.Axis(format="$,.0f", gridColor=tokens["grid"], labelColor=tokens["muted"],
+                          titleColor=tokens["ink_secondary"])),
     color=alt.Color("Component:N", sort=[c for c, _ in components],
                     scale=alt.Scale(domain=[c for c, _ in components], range=palette),
-                    legend=alt.Legend(orient="top", title=None, labelColor="#52514e", columns=3)),
+                    legend=alt.Legend(orient="top", title=None, labelColor=tokens["ink_secondary"], columns=3)),
     order=alt.Order("order:Q"),
     tooltip=[alt.Tooltip("Supplier:N"), alt.Tooltip("Component:N"),
              alt.Tooltip("Per unit (USD):Q", format="$,.2f"),
              alt.Tooltip("Landed per unit:Q", format="$,.2f")],
 )
 totals = alt.Chart(chart_df.drop_duplicates("Supplier")).mark_text(
-    align="left", dx=6, color="#0b0b0b", fontSize=12).encode(
+    align="left", dx=6, color=tokens["ink"], fontSize=12).encode(
     y=alt.Y("Supplier:N", sort=order), x=alt.X("Landed per unit:Q"),
     text=alt.Text("Landed per unit:Q", format="$,.2f"),
 )
@@ -203,9 +206,9 @@ ui.render_flags([f for f in best["flags"] if f["severity"] in ("high", "medium")
 
 memo_key = f"memo_{event_id}"
 c1, c2 = st.columns(2)
-if c1.button("📝 Draft memo (template)", width="stretch"):
+if c1.button("Draft memo (template)", width="stretch", icon=":material/description:"):
     st.session_state[memo_key] = (memo.template_memo(rfq, rows, weights), "template")
-if c2.button("✨ Draft memo with Claude", width="stretch", disabled=ctx["mode"] != "live",
+if c2.button("Draft memo with Claude", width="stretch", disabled=ctx["mode"] != "live", icon=":material/auto_awesome:",
              help=None if ctx["mode"] == "live" else "Requires Live mode"):
     with st.spinner("Drafting…"):
         text, meta = memo.llm_memo(rfq, rows, weights, ctx["api_key"])
@@ -235,7 +238,8 @@ followed = chosen["quote_id"] == best["quote_id"]
 justification = ""
 if not followed:
     justification = st.text_area("Justification required: award differs from the highest-scoring bid")
-if st.button("Record award decision", type="primary", disabled=not followed and not justification.strip()):
+if st.button("Record award decision", type="primary", disabled=not followed and not justification.strip(),
+             icon=":material/gavel:"):
     db.record_award({
         "event_id": event_id, "quote_id": chosen["quote_id"], "supplier": chosen["supplier"],
         "landed_total_usd": chosen["landed"].landed_total_usd, "naive_supplier": naive["supplier"],
