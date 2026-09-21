@@ -1,9 +1,75 @@
+# Theme. Shared options live in [theme]; colours are defined once per mode in [theme.light] and [theme.dark],
+# so the app follows the viewer's OS setting and Streamlit's Settings menu can switch between them.
+# The chart colours and the two surfaces (#fcfcfb, #1a1a19) are a validated pair: see ui.chart_tokens().
 [theme]
-base = "light"
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+showWidgetBorder = true
+showSidebarBorder = true
+linkUnderline = false
+headingFontSizes = ["2.1rem", "1.6rem", "1.3rem", "1.1rem", "1rem", "0.9rem"]
+headingFontWeights = [700, 650, 600, 600, 600, 600]
+metricValueFontSize = "1.9rem"
+
+[theme.light]
 primaryColor = "#1f3a5f"
 backgroundColor = "#fcfcfb"
 secondaryBackgroundColor = "#f0efec"
 textColor = "#0b0b0b"
+linkColor = "#1f5fae"
+borderColor = "#dddcd5"
+dataframeBorderColor = "#e1e0d9"
+dataframeHeaderBackgroundColor = "#f4f3f0"
+codeBackgroundColor = "#f0efec"
+redColor = "#d03b3b"
+redBackgroundColor = "#fbeceb"
+redTextColor = "#8f1f1f"
+orangeColor = "#d95926"
+yellowColor = "#c98500"
+yellowBackgroundColor = "#fdf3dc"
+yellowTextColor = "#6e4a00"
+greenColor = "#0a8a0a"
+greenBackgroundColor = "#e8f5e8"
+greenTextColor = "#006300"
+blueColor = "#2a78d6"
+blueBackgroundColor = "#e9f1fb"
+blueTextColor = "#1a4f8f"
+chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+
+[theme.light.sidebar]
+backgroundColor = "#f4f3f0"
+secondaryBackgroundColor = "#e9e8e3"
+borderColor = "#dddcd5"
+
+[theme.dark]
+primaryColor = "#3987e5"
+backgroundColor = "#1a1a19"
+secondaryBackgroundColor = "#262624"
+textColor = "#f2f1ec"
+linkColor = "#7fb2f0"
+borderColor = "#383835"
+dataframeBorderColor = "#2c2c2a"
+dataframeHeaderBackgroundColor = "#232321"
+codeBackgroundColor = "#262624"
+redColor = "#e66767"
+redBackgroundColor = "#3a1d1c"
+redTextColor = "#f3a7a7"
+orangeColor = "#ec835a"
+yellowColor = "#fab219"
+yellowBackgroundColor = "#3a2e12"
+yellowTextColor = "#f5d28a"
+greenColor = "#0ca30c"
+greenBackgroundColor = "#16301a"
+greenTextColor = "#8fd98f"
+blueColor = "#3987e5"
+blueBackgroundColor = "#15283f"
+blueTextColor = "#a9cdf5"
+chartCategoricalColors = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
+
+[theme.dark.sidebar]
+backgroundColor = "#131312"
+secondaryBackgroundColor = "#232321"
+borderColor = "#2c2c2a"
 
 [server]
 maxUploadSize = 20
