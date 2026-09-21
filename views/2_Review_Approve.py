@@ -14,40 +14,41 @@ from bidlens.ingest import quote_in_document
 from bidlens.rules import SEVERITY_ORDER, label
 from bidlens.schemas import FIELD_SPECS, flat_values
 
-ui.setup_page("Review & Approve", "🔎")
+ui.setup_page("Review & Approve")
 ctx = ui.sidebar()
 
-st.title("🔎 Review & Approve")
-st.caption("Human-in-the-loop checkpoint: nothing reaches the comparison until a buyer approves it.")
+ui.page_header("Review & Approve", ui.PAGE_ICON["views/2_Review_Approve.py"],
+               "Human-in-the-loop checkpoint: nothing reaches the comparison until a buyer approves it.")
 
 event_id = ctx["event_id"]
 if not event_id:
     st.info("Create or load a bid event first.")
-    ui.nav_link("pages/1_New_Bid_Event.py", "Go to New Bid Event", "🆕")
+    ui.nav_link("views/1_New_Bid_Event.py", "Go to New Bid Event")
     st.stop()
 
 event, rfq = ui.load_rfq(event_id)
 quotes = db.list_quotes(event_id)
 if not quotes:
-    st.info("**No quotes in this event yet.** 👉 Add supplier quotes on **New Bid Event** first.")
-    ui.nav_link("pages/1_New_Bid_Event.py", "Go to New Bid Event", "🆕")
+    st.info("**No quotes in this event yet.** Add supplier quotes on **New Bid Event** first.")
+    ui.nav_link("views/1_New_Bid_Event.py", "Go to New Bid Event")
     st.stop()
 
 _, award = ui.workflow_stepper(event_id, "review", quotes)
 
 if "review_flash" in st.session_state:
-    st.success(st.session_state.pop("review_flash"))
+    st.success(st.session_state.pop("review_flash"), icon=":material/task_alt:")
 ui.scroll_to_top_if_requested()  # decisions happen at the bottom of a long page; start the next quote at the top
 
 done = sum(q["status"] in ui.REVIEWED for q in quotes)
 if done == len(quotes) and award:
-    st.success(f"**✅ All quotes are reviewed and the award is recorded ({ui.short_name(award['supplier'])}).** "
-               "Reopening a quote below withdraws the award, so it can be re-decided on the Comparison page.")
+    st.success(f"**All quotes are reviewed and the award is recorded ({ui.short_name(award['supplier'])}).** "
+               "Reopening a quote below withdraws the award, so it can be re-decided on the Comparison page.",
+               icon=":material/check_circle:")
 elif done == len(quotes):
-    st.success("**✅ All quotes are reviewed.** Use the **Next** button above to compare bids and record the award. "
-               "You can still reopen any quote below.")
+    st.success("**All quotes are reviewed.** Use the **Next** button above to compare bids and record the award. "
+               "You can still reopen any quote below.", icon=":material/check_circle:")
 
-with st.expander("📋 How to review a quote", expanded=done == 0):
+with st.expander("How to review a quote", expanded=done == 0, icon=":material/checklist:"):
     st.markdown(
         "1. **Read the colored boxes.** 🔴 Red = high risk, 🟠 amber = medium risk. Each item says what to do.\n"
         "2. **Check the evidence.** The document on the right highlights the text each value came from.\n"
@@ -119,7 +120,8 @@ answer_key = db.get_answer_key(quote_id)
 if answer_key and q["extraction"]:
     fields = compare_fields(answer_key["truth"], q["extraction"], skip={"payment_terms", *answer_key["omitted"]})
     correct = sum(f["correct"] for f in fields)
-    with st.expander(f"🎲 AI-generated test quote · answer key check: {correct}/{len(fields)} fields correct"):
+    with st.expander(f"AI-generated test quote · answer key check: {correct}/{len(fields)} fields correct",
+                     icon=":material/casino:"):
         st.caption("Code chose these terms at random, and Claude wrote the document from them. The extraction "
                    "below never saw this answer key. Comparison uses the AI's original extraction, before any "
                    f"buyer edits. Style: {answer_key['style']}.")
@@ -214,7 +216,7 @@ with left:
             st.rerun()
     else:
         c1, c2 = st.columns(2)
-        if c1.button("💾 Save edits", width="stretch"):
+        if c1.button("Save edits", width="stretch", icon=":material/save:"):
             new, edits, errors = apply_edits()
             if errors:
                 for e in errors:
@@ -228,7 +230,7 @@ with left:
         st.markdown("#### Decision")
         new, edits, errors = apply_edits()
         if edits:
-            st.warning("✏️ You have unsaved edits. Click **Save edits** before approving.")
+            st.warning("You have unsaved edits. Click **Save edits** before approving.", icon=":material/edit:")
         # A quote that cannot be costed must not reach the comparison; ticking the box below does not override this.
         blocker = costing.uncostable(flat_values(reviewed), rfq.quantity)
         ack = True
@@ -242,14 +244,15 @@ with left:
         note = st.text_input("Review note (optional; recorded in the audit log)", key=f"note_{quote_id}")
         a, r = st.columns(2)
         can_approve = ack and not edits and not blocker
-        if a.button("✅ Approve quote", type="primary", disabled=not can_approve, width="stretch"):
+        if a.button("Approve quote", type="primary", disabled=not can_approve, width="stretch",
+                    icon=":material/check:"):
             db.set_quote_status(q["id"], "approved", ctx["actor"], event_id, note)
-            after_decision("✅ Approved")
+            after_decision("Approved")
             st.rerun()
-        if r.button("⛔ Reject quote", width="stretch"):
+        if r.button("Reject quote", width="stretch", icon=":material/block:"):
             db.set_quote_status(q["id"], "rejected", ctx["actor"], event_id, note or "Rejected by buyer")
             workflow.refresh_flags(event_id, rfq)
-            after_decision("⛔ Rejected")
+            after_decision("Rejected")
             st.rerun()
         if blocker:
             st.caption(f"Approval blocked: {blocker}. Fix the value above, or reject the quote.")
@@ -258,6 +261,10 @@ with left:
 
 
 # --- Source document with highlighted citations ----------------------------------
+# Translucent highlight that keeps the text colour, so citations stay legible on the light and the dark theme.
+MARK_STYLE = "background:rgba(250,178,25,.38);color:inherit;border-radius:2px;padding:0 1px"
+
+
 def highlighted(text: str, quotes_to_mark: list[str]) -> str:
     escaped = html.escape(text)
     for src in sorted(set(quotes_to_mark), key=len, reverse=True):
@@ -265,8 +272,10 @@ def highlighted(text: str, quotes_to_mark: list[str]) -> str:
         if not words:
             continue
         pattern = re.compile(r"\s+".join(words), re.IGNORECASE)
-        escaped = pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", escaped, count=1)
-    return escaped
+        # Mark with control characters and insert the tags at the end, so a short citation ("25") can never
+        # match inside the markup added for an earlier one.
+        escaped = pattern.sub(lambda m: f"\x00{m.group(0)}\x01", escaped, count=1)
+    return escaped.replace("\x00", f"<mark style='{MARK_STYLE}'>").replace("\x01", "</mark>")
 
 
 with right:

@@ -36,7 +36,7 @@ Wherever quotes are listed, risk badges like `🔴 2 high · 🟠 1 medium` tell
 
 **New Bid Event → Quick start** offers two ways to start:
 - **Load demo scenario:** a prepared RFQ with four sample quotes, each with a built-in problem.
-- **🎲 Generate a fresh scenario:** a random RFQ with AI-written quotes from suppliers nobody has seen (see below).
+- **Generate a fresh scenario:** a random RFQ with AI-written quotes from suppliers nobody has seen (see below).
 
 For real work, use **Create a custom bid event**. Enter the quantity, required lead time and standard payment terms; the rules check every quote against these values. Then upload quotes (PDF, Excel, text) at **Add quotes** and click **Extract**.
 
@@ -77,7 +77,7 @@ After each decision, a banner tells you who's next ("Next up: Lakeshore Cast Com
 
 ## Generating fresh test quotes (demo)
 
-**🎲 Generate a fresh scenario** (or **Generate supplier quotes for this RFQ with AI** on an empty event) shows the tool isn't tuned to the sample quotes:
+**Generate a fresh scenario** (or **Generate supplier quotes for this RFQ with AI** on an empty event) shows the tool isn't tuned to the sample quotes:
 
 1. Code randomly chooses each supplier's terms and keeps them as a hidden answer key.
 2. Claude writes realistic quote documents from those terms.

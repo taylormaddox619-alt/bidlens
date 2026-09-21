@@ -90,3 +90,44 @@ def test_comparison_labels_are_unique_per_quote():
     rows[1]["filename"] = "acme.pdf"
     labels = ui.comparison_labels(rows)
     assert len(set(labels.values())) == 3 and labels["a"] == "Acme Inc. (acme.pdf) (a)"
+
+
+# --- Navigation, branding and theme ---------------------------------------------------------------------
+def test_navigation_lists_every_view_exactly_once():
+    from bidlens.config import ROOT
+    registered = [path for group in ui.NAV.values() for path, _, _ in group]
+    on_disk = sorted(f"views/{p.name}" for p in (ROOT / "views").glob("*.py"))
+    assert sorted(registered) == on_disk
+    assert set(ui.PAGES.values()) <= set(registered)
+    assert all(icon.startswith(":material/") for group in ui.NAV.values() for _, _, icon in group)
+
+
+def test_views_are_not_in_a_pages_folder():
+    """A `pages/` folder turns on Streamlit's legacy auto-navigation, which takes over the first run after every
+    server start and shows file names instead of the sectioned menu built in Home.py."""
+    from bidlens.config import ROOT
+    assert not (ROOT / "pages").exists()
+
+
+def test_theme_defines_light_and_dark_and_matches_the_chart_surfaces():
+    import tomllib
+    from bidlens.config import ROOT
+    theme = tomllib.loads((ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8"))["theme"]
+    assert "base" not in theme  # a fixed base would stop the app following the viewer's light/dark setting
+    for mode in ("light", "dark"):
+        tokens = ui._CHART_TOKENS[mode]
+        # The chart palette was validated against these surfaces; the segment gaps are drawn in the same colour.
+        assert theme[mode]["backgroundColor"] == tokens["surface"]
+        assert theme[mode]["chartCategoricalColors"][:5] == tokens["categorical"]
+        assert (ROOT / "assets" / f"logo_{mode}.svg").exists()
+
+
+def test_theme_falls_back_to_light_outside_a_browser_session():
+    assert ui.theme_type() == "light" and ui.chart_tokens()["surface"] == "#fcfcfb"
+
+
+def test_page_titles_use_material_icons_not_emoji():
+    from bidlens.config import ROOT
+    for path in (ROOT / "views").glob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "ui.page_header(" in source and "st.title(" not in source, path.name

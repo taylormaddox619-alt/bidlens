@@ -12,7 +12,7 @@ from bidlens.config import SAMPLES_DIR
 from bidlens.scoring import DEFAULT_WEIGHTS
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = ["Home.py"] + [f"pages/{p.name}" for p in sorted((ROOT / "pages").glob("*.py"))]
+SCRIPTS = ["Home.py"] + [f"views/{p.name}" for p in sorted((ROOT / "views").glob("*.py"))]
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_comparison_page_warns_instead_of_crashing(event_id, samples, rfq, words
     add_quote(event_id, samples["lakeshore"], rfq, words_currency, "approved")
     add_quote(event_id, samples["sierra"], rfq, status="approved")
     add_quote(event_id, samples["jadeport"], rfq, status="approved")
-    at = run_page("pages/3_Comparison.py", event_id)
+    at = run_page("views/3_Comparison.py", event_id)
     assert not at.exception, at.exception
     assert any("Lakeshore" in w.value and "no FX rate on file for US DOLLARS" in w.value for w in at.warning)
     assert any(m.value.startswith("#### Scorecard") for m in at.markdown)  # the other two are still compared
@@ -68,7 +68,7 @@ def test_comparison_page_warns_instead_of_crashing(event_id, samples, rfq, words
 def test_comparison_page_needs_two_costable_quotes(event_id, samples, rfq, words_currency):
     add_quote(event_id, samples["lakeshore"], rfq, words_currency, "approved")
     add_quote(event_id, samples["sierra"], rfq, status="approved")
-    at = run_page("pages/3_Comparison.py", event_id)
+    at = run_page("views/3_Comparison.py", event_id)
     assert not at.exception, at.exception
     assert any("Lakeshore" in w.value for w in at.warning)
     assert any("At least two approved quotes" in w.value for w in at.warning)
@@ -76,7 +76,7 @@ def test_comparison_page_needs_two_costable_quotes(event_id, samples, rfq, words
 
 def test_review_page_blocks_approval_of_an_uncostable_quote(event_id, samples, rfq, words_currency):
     quote_id = add_quote(event_id, samples["lakeshore"], rfq, words_currency)
-    at = run_page("pages/2_Review_Approve.py", event_id, review_quote=quote_id)
+    at = run_page("views/2_Review_Approve.py", event_id, review_quote=quote_id)
     assert not at.exception, at.exception
     at.checkbox(key=f"ack_{quote_id}").check().run()  # accepting the high flags must not unlock it
     assert not at.exception, at.exception
@@ -86,7 +86,7 @@ def test_review_page_blocks_approval_of_an_uncostable_quote(event_id, samples, r
 
 def test_review_page_still_approves_a_normal_quote(event_id, samples, rfq):
     quote_id = add_quote(event_id, samples["sierra"], rfq)
-    at = run_page("pages/2_Review_Approve.py", event_id, review_quote=quote_id)
+    at = run_page("views/2_Review_Approve.py", event_id, review_quote=quote_id)
     assert not at.exception, at.exception
     if at.checkbox:
         at.checkbox(key=f"ack_{quote_id}").check().run()
@@ -99,7 +99,7 @@ def test_review_page_shows_no_phantom_edits_for_long_numbers(event_id, samples, 
     quote = copy.deepcopy(samples["sierra"]["quote"])
     quote["tooling_cost"]["value"] = 125000.75  # 8 significant digits; '%g' showed 125001
     quote_id = add_quote(event_id, samples["sierra"], rfq, quote)
-    at = run_page("pages/2_Review_Approve.py", event_id, review_quote=quote_id)
+    at = run_page("views/2_Review_Approve.py", event_id, review_quote=quote_id)
     assert not at.exception, at.exception
     assert not any("unsaved edits" in w.value for w in at.warning)
     if at.checkbox:
@@ -118,7 +118,7 @@ def test_comparison_page_keeps_same_name_quotes_apart(event_id, samples, rfq):
     runner_up = rows[1]["quote_id"]
     assert {first, second} == {r["quote_id"] for r in rows}
 
-    at = run_page("pages/3_Comparison.py", event_id)
+    at = run_page("views/3_Comparison.py", event_id)
     assert not at.exception, at.exception
     picker = next(s for s in at.selectbox if s.label == "Award to")
     assert len(set(picker.options)) == 2 and all("Sierra Madre" in o for o in picker.options)
@@ -136,7 +136,7 @@ def test_comparison_page_keeps_same_name_quotes_apart(event_id, samples, rfq):
 # --- Governance: dollar amounts are text, not LaTeX ---------------------------------------------------
 def test_governance_page_escapes_dollar_signs(event_id):
     """Two unescaped '$' on one line ('$0.0116/doc ... $0.0306') rendered everything between them as math."""
-    at = run_page("pages/5_Governance.py", event_id)
+    at = run_page("views/5_Governance.py", event_id)
     assert not at.exception, at.exception
     doc = next(m.value for m in at.markdown if "Solution inventory" in m.value or "Model routing" in m.value)
     assert "\\$0.0116" in doc
