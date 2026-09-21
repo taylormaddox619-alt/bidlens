@@ -205,3 +205,13 @@ def test_comparison_shows_a_ranking_table_that_fits_and_keeps_the_full_csv(event
     # The scoring weights render inside the sidebar, above its footer note.
     sidebar_labels = [s.label for s in at.sidebar.slider]
     assert sidebar_labels == ["Landed cost", "Lead time", "Commercial terms", "Risk (open flags)"]
+
+
+def test_review_page_markdown_uses_material_icons_not_emoji(event_id, samples, rfq):
+    """Emoji are only for plain-text contexts (table cells, widget labels, and the caption explaining the cells)."""
+    quote_id = add_quote(event_id, samples["lakeshore"], rfq)  # has high-risk flags, so the Decision box renders
+    at = run_page("views/2_Review_Approve.py", event_id, review_quote=quote_id)
+    assert not at.exception, at.exception
+    decision = next(m.value for m in at.markdown if "To approve, you must accept" in m.value)
+    assert ":material/error:" in decision
+    assert not any(dot in m.value for m in at.markdown for dot in "🔴🟠🟢🔵")
