@@ -60,7 +60,7 @@ API or network errors do **not** trigger escalation; only quality failures do. I
 - Scanned (image-only) PDFs are not supported without OCR.
 - Payment-term valuation uses a single cost-of-capital assumption.
 - Scoring weights are a starting point and should be calibrated with category managers.
-- The public demo is a shared, ephemeral workspace, not a system of record: there are no user accounts, every visitor sees and can change or delete the same events (the audit-log name is self-declared), and the DuckDB file is not persisted across redeploys.
+- The public demo is a shared, ephemeral workspace, not a system of record: there are no user accounts, every visitor sees and can change or delete the same events (the audit-log name is self-declared), and the DuckDB file is not persisted across redeploys. If a previous server process still holds the file's lock after a restart, the app starts on a fresh database file rather than failing (never when `BIDLENS_DB` names a database).
 
 ## Escalation path
 
