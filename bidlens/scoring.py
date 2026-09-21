@@ -21,6 +21,11 @@ class ScoredBid:
 
 
 def _terms_score(values: dict, rfq: RFQ, flag_codes: set[str]) -> tuple[float, list[str]]:
+    """Commercial terms, 100 minus deductions.
+
+    An expired quote loses 30 points here and, as a high flag, another 20 risk points in `score_bids`. The
+    stacking is deliberate: terms measures the commercial offer, risk measures open exceptions.
+    """
     score, why = 100.0, []
     days = values.get("payment_terms_days")
     if days is not None and days < rfq.standard_payment_days:

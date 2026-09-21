@@ -1,6 +1,6 @@
 # Extraction evaluation report
 
-- Run: 2026-09-15 19:20 UTC · configuration: **recorded extractions**
+- Run: 2026-09-21 00:17 UTC · configuration: **recorded extractions**
 - Source: recorded (claude) · model(s) `claude-sonnet-5` · prompt `extract_v2` · effort `low`
 - Documents: 4 · trials: 1 · runs scored: 4
 
@@ -19,7 +19,7 @@
 
 ## Quality gate (escalation trigger)
 
-The gate fires when a citation is missing from the document, a required field has low confidence, no price was found, or a date/country is unreadable after normalization. Below, *wrong* means at least one field disagreed with ground truth.
+The gate fires when a citation is missing from the document, a required field has low confidence, no price was found, a date/country is unreadable after normalization, or the currency or Incoterm is unrecognized. Below, *wrong* means at least one field disagreed with ground truth.
 
 | | Extraction wrong | Extraction right |
 |---|---|---|

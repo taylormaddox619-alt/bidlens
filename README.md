@@ -69,7 +69,7 @@ generate (demo only): code picks terms (answer key) ─► Claude writes documen
 ```
 
 - **LLM:** Anthropic Claude via schema-constrained structured outputs (Pydantic). Prompts are versioned files in `bidlens/prompts/` (`extract_v2`, `memo_v1`, `generate_v1`).
-- **Cost-aware model routing:** extraction runs on `claude-sonnet-5` at low reasoning effort and escalates to `claude-opus-5` only when the output fails automatic checks: a citation not found in the document, low confidence on a required field, no price, an unreadable date or country, or a schema failure. The system prompt and output schema are prompt-cached (84% of input tokens served from cache). Memos and test-quote writing use Sonnet at lower effort. Rules, costing and scoring use no LLM. See [Cost, latency and routing](#cost-latency-and-routing).
+- **Cost-aware model routing:** extraction runs on `claude-sonnet-5` at low reasoning effort and escalates to `claude-opus-5` only when the output fails automatic checks: a citation not found in the document, low confidence on a required field, no price, an unreadable date or country, an unrecognized currency or Incoterm, or a schema failure. The system prompt and output schema are prompt-cached (84% of input tokens served from cache). Memos and test-quote writing use Sonnet at lower effort. Rules, costing and scoring use no LLM. See [Cost, latency and routing](#cost-latency-and-routing).
 - **Guardrails:**
   - verbatim citations checked against the source, and null-not-guess instructions;
   - deterministic normalization, plus untrusted-document framing and a prompt-injection detector;
@@ -122,7 +122,7 @@ On Streamlit Community Cloud, add the same values under **App settings → Secre
 ## Test and evaluate
 
 ```bash
-pytest                                        # unit tests (no API calls)
+pytest                                        # unit tests + headless page tests (no API calls)
 python evals/run_evals.py --trials 3          # production routing, 3 trials -> evals/report.md, history.jsonl
 python evals/run_evals.py --compare --trials 3  # models x effort levels x routed -> evals/model_comparison.md (~$2)
 python evals/run_evals.py --configs sonnet-low,routed
@@ -132,7 +132,7 @@ python scripts/record_demo_cache.py           # record real Claude extractions f
 python scripts/make_samples.py                # regenerate the synthetic quotes and ground truth
 ```
 
-Each live run appends one line per configuration to `evals/history.jsonl` (git SHA, model, effort, prompt, accuracy, cost, p50/p95, cache hit rate, gate stats), which the AI Scorecard charts over time. CI (`.github/workflows/ci.yml`) runs the unit tests and the `--demo` eval on every push and fails if exception recall or verified citations drop below 100%.
+Each live run appends one line per configuration to `evals/history.jsonl` (git SHA, model, effort, prompt, accuracy, cost, p50/p95, cache hit rate, gate stats), which the AI Scorecard charts over time. `tests/test_pages.py` runs the Streamlit pages headlessly with `AppTest` (every page in the empty, loaded and awarded states, plus the review and comparison guardrails). CI (`.github/workflows/ci.yml`) runs the unit tests and the `--demo` eval on every push and fails if exception recall or verified citations drop below 100%.
 
 ## Project structure
 
@@ -178,6 +178,7 @@ scripts/                 sample generation, demo-cache recording, API probe
 - Scanned image-only PDFs need OCR.
 - Scoring weights are a starting point to calibrate with category managers.
 - The eval set is 4 labelled quotes run 3 times per configuration: enough to catch systematic defects and to see run-to-run variation, not to certify accuracy. With 12 runs, p95 latency is close to the maximum.
+- The public demo is a shared, ephemeral workspace: everyone sees the same events, and the database resets on redeploy.
 - All companies and data in this repository are fictional.
 
 ---

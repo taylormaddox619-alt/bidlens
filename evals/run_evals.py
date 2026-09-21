@@ -256,8 +256,8 @@ def gate_lines(summary: dict) -> list[str]:
     return [
         "## Quality gate (escalation trigger)", "",
         "The gate fires when a citation is missing from the document, a required field has low confidence, no price "
-        "was found, or a date/country is unreadable after normalization. Below, *wrong* means at least one field "
-        "disagreed with ground truth.", "",
+        "was found, a date/country is unreadable after normalization, or the currency or Incoterm is unrecognized. "
+        "Below, *wrong* means at least one field disagreed with ground truth.", "",
         "| | Extraction wrong | Extraction right |", "|---|---|---|",
         f"| Gate fired | {g['fired_wrong']} | {g['fired_ok']} |",
         f"| Gate quiet | {g['quiet_wrong']} | {g['quiet_ok']} |", "",
