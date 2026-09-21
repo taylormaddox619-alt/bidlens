@@ -49,3 +49,10 @@ def test_quote_schema_is_strict_json_schema():
     schema = Quote.model_json_schema()
     assert "unit_price" in schema["required"]
     json.dumps(schema)
+
+
+def test_schema_and_prompt_agree_on_unstated_prepayment():
+    """extract_v2 says null when no prepayment is stated (0 cannot be cited). The field description is sent to
+    the model with every call as part of the output schema, so it must not say the opposite."""
+    description = Quote.model_json_schema()["properties"]["prepayment_percent"]["description"]
+    assert "null" in description and "0 if none" not in description
