@@ -1,6 +1,7 @@
 """Run the Streamlit pages headlessly (AppTest) against a temporary database. No API calls."""
 
 import copy
+import re
 from pathlib import Path
 
 import pytest
@@ -130,6 +131,16 @@ def test_comparison_page_keeps_same_name_quotes_apart(event_id, samples, rfq):
     award = db.get_award(event_id)
     assert award["quote_id"] == runner_up  # by name, this resolved to the first quote
     assert award["followed_recommendation"] is False
+
+
+# --- Governance: dollar amounts are text, not LaTeX ---------------------------------------------------
+def test_governance_page_escapes_dollar_signs(event_id):
+    """Two unescaped '$' on one line ('$0.0116/doc ... $0.0306') rendered everything between them as math."""
+    at = run_page("pages/5_Governance.py", event_id)
+    assert not at.exception, at.exception
+    doc = next(m.value for m in at.markdown if "Solution inventory" in m.value or "Model routing" in m.value)
+    assert "\\$0.0116" in doc
+    assert not re.search(r"(?<!\\)\$", doc)
 
 
 # --- Smoke: every page renders in every workflow state ----------------------------------------------
