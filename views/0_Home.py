@@ -9,8 +9,8 @@ from bidlens import ui
 ui.setup_page("Home")
 ctx = ui.sidebar()
 
-ui.page_header("BidLens", ":material/request_quote:")
-st.subheader("AI-assisted supplier bid analysis, with a buyer in control")
+# The wordmark is already in the sidebar, so the page title is the tagline rather than "BidLens" a second time.
+ui.page_header("AI-assisted supplier bid analysis, with a buyer in control", ":material/request_quote:")
 
 st.markdown(
     """
@@ -34,7 +34,7 @@ steps = [
     (":material/balance:", "4 · Compare",
      "Quotes are normalized to **total landed cost** (FX, freight, duty, tooling, terms) and "
      "scored with adjustable weights and a visible rationale."),
-    (":material/monitoring:", "5 · Decide & measure",
+    (":material/monitoring:", "5 · Decide",
      "Draft award memo, recorded decision and audit log. Adoption and outcomes roll up to an **AI Scorecard**."),
 ]
 for col, (icon, title, body) in zip(st.columns(5), steps):
@@ -50,12 +50,13 @@ with left:
         """
 1. **New Bid Event → Quick start**: click *Load demo scenario*, or *Generate a fresh scenario* for suppliers nobody has seen.
 2. Follow the **step tracker** at the top of each page. The **Next** button always takes you to the next step.
-3. **Review & Approve**: quotes open highest risk first. 🔴 **Red boxes** are high-risk issues and 🟠 **amber boxes** are medium risk, each with what to do. Fix values, then approve or reject.
+3. **Review & Approve**: quotes open highest risk first. **Red boxes** are high-risk issues and **amber boxes** are medium risk, each with what to do. Fix values, then approve or reject.
 4. **Comparison**: see why the lowest unit price loses on landed cost, check red flags by supplier, and record the award.
 5. **AI Scorecard** and **Governance**: see how the tool is measured and controlled.
 """
     )
-    ui.nav_link("views/1_New_Bid_Event.py", "Start: New Bid Event")
+    if st.button("Start: New Bid Event", type="primary", icon=ui.PAGE_ICON["views/1_New_Bid_Event.py"]):
+        ui.go("views/1_New_Bid_Event.py")
 with right:
     st.markdown("#### Built with")
     st.markdown(

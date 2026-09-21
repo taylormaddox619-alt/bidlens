@@ -75,12 +75,6 @@ with st.expander("Quick start", expanded=not db.list_events(), icon=":material/b
             "Creates **RFQ-2026-0142**: 500 cast-iron compressor air-end housings, 12-week lead time, Net 60 "
             "standard terms, with **4 fictional supplier quotes** (3 PDFs, 1 Excel). Each has a built-in problem to catch."
         )
-        if st.button("Load demo scenario", type="primary"):
-            rfq = json.loads((SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8"))
-            event_id = db.create_event(rfq, ctx["actor"])
-            st.session_state["event_id"] = event_id
-            run_documents(event_id, sample_files())
-            st.rerun()
     with right:
         st.markdown("**Fresh AI-generated scenario**")
         st.markdown(
@@ -88,6 +82,16 @@ with st.expander("Quick start", expanded=not db.list_events(), icon=":material/b
             "as a **hidden answer key**. Claude writes the quote documents, then the normal pipeline reads them blind "
             "and is **scored against the answer key**, misses included."
         )
+    # The buttons get a row of their own so they line up whatever the length of the text above them.
+    left, right = st.columns(2, gap="large")
+    with left:
+        if st.button("Load demo scenario", type="primary", icon=":material/play_arrow:"):
+            rfq = json.loads((SAMPLES_DIR / "demo_rfq.json").read_text(encoding="utf-8"))
+            event_id = db.create_event(rfq, ctx["actor"])
+            st.session_state["event_id"] = event_id
+            run_documents(event_id, sample_files())
+            st.rerun()
+    with right:
         if st.button("Generate a fresh scenario", disabled=not can_generate, icon=":material/casino:"):
             new_rfq = generate_random_rfq()
             event_id = db.create_event(new_rfq, ctx["actor"])
@@ -207,9 +211,9 @@ if quotes:
     st.markdown("#### Quotes in this event")
     high_pending = [q for q in pending if ui.risk_level(q["flags"]) == "high"]
     if high_pending:
-        st.error(f"**🔴 {len(high_pending)} quote{'s have' if len(high_pending) != 1 else ' has'} high-risk issues.** "
+        st.error(f"**{len(high_pending)} quote{'s have' if len(high_pending) != 1 else ' has'} high-risk issues.** "
                  f"Review {'those' if len(high_pending) != 1 else 'it'} first: "
-                 + ", ".join(ui.short_name(ui.quote_supplier(q)) for q in high_pending))
+                 + ", ".join(ui.short_name(ui.quote_supplier(q)) for q in high_pending), icon=":material/error:")
     ordered = sorted(quotes, key=lambda q: (q["status"] in ui.REVIEWED, ui.RISK_RANK[ui.risk_level(q["flags"])]))
     table = pd.DataFrame([
         {

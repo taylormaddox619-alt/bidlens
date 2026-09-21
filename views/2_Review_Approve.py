@@ -50,7 +50,8 @@ elif done == len(quotes):
 
 with st.expander("How to review a quote", expanded=done == 0, icon=":material/checklist:"):
     st.markdown(
-        "1. **Read the colored boxes.** 🔴 Red = high risk, 🟠 amber = medium risk. Each item says what to do.\n"
+        f"1. **Read the colored boxes.** {ui.SEVERITY_MD['high']} Red = high risk, {ui.SEVERITY_MD['medium']} amber = "
+        "medium risk. Each item says what to do.\n"
         "2. **Check the evidence.** The document on the right highlights the text each value came from.\n"
         "3. **Fix wrong values** in the *Value* column, then click **Save edits**. The rules re-run automatically.\n"
         "4. **Approve** the quote to include it in the comparison (tick the box to accept any remaining red flags), "
@@ -60,8 +61,9 @@ with st.expander("How to review a quote", expanded=done == 0, icon=":material/ch
 
 
 def quote_label(q: dict) -> str:
-    return f"{ui.risk_badge(q['flags'], compact=True)} · {ui.STATUS_BADGE.get(q['status'], q['status'])} · " \
-           f"{ui.quote_supplier(q)}"
+    """Supplier first: that is what people scan the list for. Plain text, because a selectbox cannot render icons."""
+    return f"{ui.short_name(ui.quote_supplier(q))} · {ui.STATUS_TEXT.get(q['status'], q['status'])} · " \
+           f"{ui.risk_summary(q['flags'])}"
 
 
 # Pending quotes first, highest risk first.
@@ -84,7 +86,7 @@ def after_decision(verb: str) -> None:
         upcoming = remaining[0]
         st.session_state["review_flash"] = (
             f"{verb} **{name}**. Next up: **{ui.short_name(ui.quote_supplier(upcoming))}** "
-            f"({ui.risk_badge(upcoming['flags'])}) · {len(remaining)} left.")
+            f"({ui.risk_badge(upcoming['flags'], markdown=True)}) · {len(remaining)} left.")
     else:
         st.session_state["review_flash"] = f"{verb} **{name}**. That was the last quote."
     st.session_state.pop("review_quote", None)
@@ -113,7 +115,7 @@ locked = q["status"] in ui.REVIEWED
 # --- Risks ---------------------------------------------------------------------------
 flags = q["flags"]
 highs = [f for f in flags if f["severity"] == "high"]
-st.markdown(f"#### Risks for {ui.short_name(ui.quote_supplier(q))} · {ui.risk_badge(flags)}")
+st.markdown(f"#### Risks for {ui.short_name(ui.quote_supplier(q))} · {ui.risk_badge(flags, markdown=True)}")
 ui.render_flags(flags)
 
 answer_key = db.get_answer_key(quote_id)
@@ -160,26 +162,30 @@ with left:
             "Value": review.display_value(value),
             "Confidence": field.get("confidence", ""),
             "Evidence": evidence,
-            "Source text": src or "",
         })
     df = pd.DataFrame(rows)
+    # No "Source text" column: the document panel on the right highlights every citation, and without it the
+    # grid fits its column instead of scrolling sideways. Row height is pinned so the height is exact (a header
+    # plus one row per field): no blank trailing row, no inner scrollbar.
+    GRID_ROW_PX = 35
     edited_df = st.data_editor(
         df, key=f"fields_{quote_id}", hide_index=True, width="stretch", disabled=locked,
-        height=36 * (len(rows) + 1) + 3,
+        row_height=GRID_ROW_PX, height=GRID_ROW_PX * (len(rows) + 1) + 2,
         column_config={
             "field": None,
             "Field": st.column_config.TextColumn(disabled=True, width=170),
-            "Value": st.column_config.TextColumn(help="Edit to correct the extraction", width=190),
+            "Value": st.column_config.TextColumn(help="Edit to correct the extraction", width="large"),
             "Confidence": st.column_config.TextColumn(disabled=True, width=85),
             "Evidence": st.column_config.TextColumn(disabled=True, width=130),
-            "Source text": st.column_config.TextColumn(disabled=True, width="large"),
         },
     )
     st.caption("🔴/🟠 next to a field = it has a flag in the boxes above · * = required · "
                "double-click a Value to edit it")
 
     st.markdown("**Price breaks**")
-    tiers_df = pd.DataFrame(reviewed.get("price_tiers") or [],
+    if not reviewed.get("price_tiers"):
+        st.caption("No quantity price breaks in this quote. Add rows if the document has them.")
+    tiers_df =pd.DataFrame(reviewed.get("price_tiers") or [],
                             columns=["min_qty", "max_qty", "unit_price", "source_quote"])
     edited_tiers = st.data_editor(
         tiers_df, key=f"tiers_{quote_id}", hide_index=True, width="stretch", num_rows="dynamic",
@@ -279,7 +285,8 @@ def highlighted(text: str, quotes_to_mark: list[str]) -> str:
 
 
 with right:
-    st.markdown(f"#### Source document · `{q['filename']}`")
+    st.markdown("#### Source document")
+    st.caption(q["filename"])
     cites = [(reviewed.get(n) or {}).get("source_quote") for n, *_ in FIELD_SPECS]
     cites += [t.get("source_quote") for t in reviewed.get("price_tiers") or []]
     body = highlighted(q["doc_text"], [c for c in cites if c])
