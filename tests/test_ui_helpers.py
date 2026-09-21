@@ -78,3 +78,15 @@ def test_scroll_to_top_is_one_shot(monkeypatch):
 
     ui.scroll_to_top_if_requested()
     assert len(calls) == 1  # one-shot
+
+
+def test_comparison_labels_are_unique_per_quote():
+    rows = [{"quote_id": "a", "supplier": "Acme Inc.", "filename": "acme.pdf"},
+            {"quote_id": "b", "supplier": "Acme Inc.", "filename": "acme_rev2.pdf"},
+            {"quote_id": "c", "supplier": "Borealis GmbH", "filename": "b.pdf"}]
+    assert ui.comparison_labels(rows) == {"a": "Acme Inc. (acme.pdf)", "b": "Acme Inc. (acme_rev2.pdf)",
+                                          "c": "Borealis GmbH"}
+    # Same supplier and same filename (different content): fall back to the quote id.
+    rows[1]["filename"] = "acme.pdf"
+    labels = ui.comparison_labels(rows)
+    assert len(set(labels.values())) == 3 and labels["a"] == "Acme Inc. (acme.pdf) (a)"

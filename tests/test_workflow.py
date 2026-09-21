@@ -5,6 +5,7 @@ import copy
 import pytest
 
 from bidlens import costing, db, rules, workflow
+from bidlens.config import SAMPLES_DIR
 from bidlens.normalize import normalize_quote
 from bidlens.schemas import flat_values
 from bidlens.scoring import DEFAULT_WEIGHTS
@@ -83,3 +84,60 @@ def test_uncostable_reasons_and_landed_cost_agree(samples, rfq, change, reason):
     assert costing.uncostable(values, rfq.quantity) == reason
     with pytest.raises(ValueError, match=reason):
         costing.landed_cost(values, rfq)
+
+
+# --- Item 3: duplicate documents ---------------------------------------------------------------------
+def sample_files() -> list[tuple[str, bytes]]:
+    return [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]
+
+
+@pytest.fixture
+def counted_extract(monkeypatch):
+    """Count calls to the extractor: duplicates must be dropped before any (paid) model call."""
+    calls = []
+    real = workflow.extract
+
+    def counting(text, rfq, mode, api_key=None):
+        calls.append(text)
+        return real(text, rfq, mode, api_key)
+
+    monkeypatch.setattr(workflow, "extract", counting)
+    return calls
+
+
+def test_processing_the_same_documents_twice_stores_them_once(event_id, rfq, counted_extract):
+    first = workflow.process_documents(event_id, rfq, sample_files(), "demo", None, "tester")
+    assert [r["status"] for r in first] == ["extracted"] * 4 and len(counted_extract) == 4
+
+    second = workflow.process_documents(event_id, rfq, sample_files(), "demo", None, "tester")
+    assert [r["status"] for r in second] == ["duplicate"] * 4
+    assert all(r["quote_id"] is None and r["cost_usd"] == 0.0 for r in second)
+    assert second[0]["error"] == f"Identical to {first[0]['filename']}, already in this event."
+    assert len(counted_extract) == 4  # no extraction for duplicates
+    quotes = db.list_quotes(event_id)
+    assert len(quotes) == 4 and len({q["doc_sha"] for q in quotes}) == 4
+
+
+def test_the_same_file_twice_in_one_batch_is_stored_once(event_id, rfq, counted_extract):
+    name, data = sample_files()[0]
+    results = workflow.process_documents(event_id, rfq, [(name, data), ("copy_" + name, data)], "demo", None, "t")
+    assert [r["status"] for r in results] == ["extracted", "duplicate"]
+    assert results[1]["error"] == f"Identical to {name}, already in this event."
+    assert len(db.list_quotes(event_id)) == 1 and len(counted_extract) == 1
+
+
+def test_single_document_path_also_skips_duplicates(event_id, rfq):
+    name, data = sample_files()[0]
+    assert workflow.process_document(event_id, rfq, name, data, "demo", None, "t")["status"] == "extracted"
+    assert workflow.process_document(event_id, rfq, name, data, "demo", None, "t")["status"] == "duplicate"
+
+
+def test_a_failed_document_can_be_retried(event_id, rfq, monkeypatch):
+    """A failed extraction (rate limit, API error) must not block uploading the same file again."""
+    name, data = sample_files()[0]
+    with monkeypatch.context() as m:
+        m.setattr(workflow, "extract", lambda *a: (None, {"source": "live", "status": "failed",
+                                                          "error": "Rate limited"}))
+        assert workflow.process_document(event_id, rfq, name, data, "live", "key", "t")["status"] == "failed"
+    assert workflow.process_document(event_id, rfq, name, data, "demo", None, "t")["status"] == "extracted"
+    assert sorted(q["status"] for q in db.list_quotes(event_id)) == ["extracted", "failed"]

@@ -188,6 +188,8 @@ if scores:
 for r in st.session_state.pop("last_results", []):
     if r["status"] == "failed":
         st.error(f"{r['filename']}: {r['error']} The quote can be entered manually on the Review page.")
+    elif r["status"] == "duplicate":
+        st.warning(f"{r['filename']}: skipped. {r['error']}")
     else:
         src = {"fixture": "recorded (hand-labeled)", "claude": "recorded Claude run", "live": "live Claude call"}
         route = ""
@@ -220,10 +222,12 @@ if quotes:
     ui.next_step_button(quotes, award, "setup", key="next_bottom_setup")
 
 st.markdown("#### Add quotes")
+# The key changes after each extraction, which empties the uploader so a second click cannot resubmit the files.
 uploads = st.file_uploader("Upload supplier quotes (PDF, Excel, text)", type=list(SUPPORTED_TYPES),
-                           accept_multiple_files=True)
+                           accept_multiple_files=True, key=f"uploads_{st.session_state.get('upload_round', 0)}")
 if uploads and st.button(f"Extract {len(uploads)} document(s)", type="primary"):
     run_documents(event_id, [(u.name, u.getvalue()) for u in uploads])
+    st.session_state["upload_round"] = st.session_state.get("upload_round", 0) + 1
     st.rerun()
 
 with st.expander("Danger zone"):

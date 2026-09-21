@@ -65,6 +65,11 @@ with st.sidebar:
         st.stop()
 
 rows = workflow.comparison(event_id, rfq, weights)
+# Everything below identifies a row by quote id and displays its label: two quotes can share a supplier name.
+labels = ui.comparison_labels(rows)
+for r in rows:
+    r["label"] = labels[r["quote_id"]]
+    r["short"] = ui.short_name(r["supplier"]) if r["label"] == r["supplier"] else r["label"]
 best = rows[0]
 naive = min(rows, key=lambda r: r["landed"].unit_price_usd)
 cheapest_landed = min(rows, key=lambda r: r["landed"].landed_total_usd)
@@ -73,11 +78,10 @@ naive_gap = naive["landed"].landed_total_usd - cheapest_landed["landed"].landed_
 st.caption(f"{event['name']} · {rfq.quantity:,} units · all values in USD (FX {fx_as_of()})")
 
 tiles = [
-    ("Recommended", ui.short_name(best["supplier"]), f"Score {best['overall']:.1f} / 100"),
-    ("Lowest landed cost", ui.money(cheapest_landed["landed"].landed_total_usd),
-     ui.short_name(cheapest_landed["supplier"])),
+    ("Recommended", best["short"], f"Score {best['overall']:.1f} / 100"),
+    ("Lowest landed cost", ui.money(cheapest_landed["landed"].landed_total_usd), cheapest_landed["short"]),
     ("Cost avoided vs. lowest unit price", ui.money(naive_gap),
-     f"{ui.short_name(naive['supplier'])} lands at {ui.money(naive['landed'].landed_total_usd)}"),
+     f"{naive['short']} lands at {ui.money(naive['landed'].landed_total_usd)}"),
 ]
 for col, (title, value, sub) in zip(st.columns(3), tiles):
     with col.container(border=True):
@@ -86,12 +90,12 @@ for col, (title, value, sub) in zip(st.columns(3), tiles):
                     unsafe_allow_html=True)
         st.caption(ui.md(sub))
 
-if naive["supplier"] != cheapest_landed["supplier"]:
+if naive["quote_id"] != cheapest_landed["quote_id"]:
     st.info(ui.md(
-        f"**Insight:** {naive['supplier']} has the lowest unit price "
+        f"**Insight:** {naive['label']} has the lowest unit price "
         f"(${naive['landed'].unit_price_usd:,.2f}), but freight, duty, tooling and terms add "
         f"{ui.money(naive['landed'].landed_total_usd - naive['landed'].goods_usd)}. Its total landed cost is "
-        f"{ui.money(naive_gap)} above {cheapest_landed['supplier'].rstrip('.')}."
+        f"{ui.money(naive_gap)} above {cheapest_landed['label'].rstrip('.')}."
     ))
 
 # --- Landed cost breakdown chart ----------------------------------------------------------
@@ -99,11 +103,11 @@ st.markdown("#### Landed cost per unit, by component")
 components = [("Goods", "goods_usd"), ("Tooling", "tooling_usd"), ("Freight", "freight_usd"),
               ("Duty / tariff", "duty_usd"), ("Payment terms", "terms_adjustment_usd")]
 palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]  # reference categorical slots 1-5
-order = [r["supplier"] for r in sorted(rows, key=lambda r: r["landed"].landed_per_unit_usd)]
+order = [r["label"] for r in sorted(rows, key=lambda r: r["landed"].landed_per_unit_usd)]
 chart_rows = []
 for r in rows:
     for i, (name, attr) in enumerate(components):
-        chart_rows.append({"Supplier": r["supplier"], "Component": name, "order": i,
+        chart_rows.append({"Supplier": r["label"], "Component": name, "order": i,
                            "Per unit (USD)": getattr(r["landed"], attr) / rfq.quantity,
                            "Landed per unit": r["landed"].landed_per_unit_usd})
 chart_df = pd.DataFrame(chart_rows)
@@ -140,7 +144,7 @@ st.markdown("#### Scorecard")
 table = pd.DataFrame([
     {
         "Rank": i + 1,
-        "Supplier": r["supplier"],
+        "Supplier": r["label"],
         "Risk flags": ui.risk_badge(r["flags"]),
         "Score": round(r["overall"], 1),
         "Quoted unit": f"{r['landed'].unit_price_quoted:,.2f} {r['landed'].currency}",
@@ -173,7 +177,7 @@ flag_rows = []
 for r in sorted(rows, key=lambda r: ui.RISK_RANK[ui.risk_level(r["flags"])]):
     counts = ui.flag_counts(r["flags"])
     flag_rows.append({
-        "Risk": ui.RISK_LABEL[ui.risk_level(r["flags"])], "Supplier": r["supplier"],
+        "Risk": ui.RISK_LABEL[ui.risk_level(r["flags"])], "Supplier": r["label"],
         "🔴 High": counts["high"], "🟠 Medium": counts["medium"],
         "High-risk issues (accepted at review)": "; ".join(
             f"{label(f['field'])}: {f['message']}" for f in r["flags"] if f["severity"] == "high") or "-",
@@ -184,14 +188,14 @@ st.caption("These quotes were approved with their flags visible. High-risk items
 
 with st.expander("How each score was calculated"):
     for r in rows:
-        st.markdown(f"**{r['supplier']}** — overall {r['overall']:.1f}")
+        st.markdown(f"**{r['label']}** — overall {r['overall']:.1f}")
         st.markdown(ui.md("\n".join(f"- {line}" for line in r["rationale"] + r["landed"].notes)))
     st.caption("Cost = lowest landed ÷ this landed × 100. Lead time = fastest ÷ this × 100, −25 if it exceeds the "
                "requirement. Terms start at 100 with deductions. Risk = 100 − 20 per high flag − 8 per medium flag.")
 
 # --- Memo & decision ----------------------------------------------------------------------
 st.divider()
-st.markdown(f"#### Award recommendation: {best['supplier']} · {ui.risk_badge(best['flags'])}")
+st.markdown(f"#### Award recommendation: {best['label']} · {ui.risk_badge(best['flags'])}")
 if any(f["severity"] == "high" for f in best["flags"]):
     st.error("**🔴 The highest-scoring supplier has high-risk issues.** Close them, or choose another supplier "
              "with a written justification, before recording the award.")
@@ -225,19 +229,19 @@ if award:
     st.success(ui.md(f"Awarded to **{award['supplier']}** by {award['decided_by']} on "
                      f"{award['decided_at']:%Y-%m-%d %H:%M} UTC · cost avoided vs. lowest unit price: "
                      f"{ui.money(award['savings_vs_naive_usd'])}"))
-suppliers = [r["supplier"] for r in rows]
-choice = st.selectbox("Award to", suppliers, index=0)
-chosen = rows[suppliers.index(choice)]
+choice = st.selectbox("Award to", [r["quote_id"] for r in rows], index=0, format_func=labels.get)
+chosen = next(r for r in rows if r["quote_id"] == choice)
+followed = chosen["quote_id"] == best["quote_id"]
 justification = ""
-if choice != best["supplier"]:
+if not followed:
     justification = st.text_area("Justification required: award differs from the highest-scoring bid")
-if st.button("Record award decision", type="primary", disabled=choice != best["supplier"] and not justification.strip()):
+if st.button("Record award decision", type="primary", disabled=not followed and not justification.strip()):
     db.record_award({
         "event_id": event_id, "quote_id": chosen["quote_id"], "supplier": chosen["supplier"],
         "landed_total_usd": chosen["landed"].landed_total_usd, "naive_supplier": naive["supplier"],
         "naive_landed_total_usd": naive["landed"].landed_total_usd,
         "savings_vs_naive_usd": naive["landed"].landed_total_usd - chosen["landed"].landed_total_usd,
-        "followed_recommendation": choice == best["supplier"], "justification": justification,
+        "followed_recommendation": followed, "justification": justification,
     }, ctx["actor"])
     st.rerun()
 if award:

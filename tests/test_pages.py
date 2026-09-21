@@ -106,6 +106,32 @@ def test_review_page_shows_no_phantom_edits_for_long_numbers(event_id, samples, 
     assert not button(at, "Approve quote").disabled
 
 
+# --- Item 3: two quotes from the same supplier ----------------------------------------------------
+def test_comparison_page_keeps_same_name_quotes_apart(event_id, samples, rfq):
+    revised = copy.deepcopy(samples["sierra"]["quote"])
+    revised["unit_price"]["value"] = 150.0
+    revised["price_tiers"] = []
+    first = add_quote(event_id, samples["sierra"], rfq, status="approved")
+    second = add_quote(event_id, {**samples["sierra"], "filename": "Q4_revised.xlsx"}, rfq, revised, "approved")
+    rows = workflow.comparison(event_id, rfq, DEFAULT_WEIGHTS)
+    runner_up = rows[1]["quote_id"]
+    assert {first, second} == {r["quote_id"] for r in rows}
+
+    at = run_page("pages/3_Comparison.py", event_id)
+    assert not at.exception, at.exception
+    picker = next(s for s in at.selectbox if s.label == "Award to")
+    assert len(set(picker.options)) == 2 and all("Sierra Madre" in o for o in picker.options)
+    assert any(samples["sierra"]["filename"] in o for o in picker.options)
+
+    picker.set_value(runner_up).run()
+    at.text_area[0].input("Revised quote withdrawn by the supplier.").run()
+    button(at, "Record award decision").click().run()
+    assert not at.exception, at.exception
+    award = db.get_award(event_id)
+    assert award["quote_id"] == runner_up  # by name, this resolved to the first quote
+    assert award["followed_recommendation"] is False
+
+
 # --- Smoke: every page renders in every workflow state ----------------------------------------------
 def load_demo_event(event_id, rfq) -> None:
     files = [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]

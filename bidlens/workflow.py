@@ -10,21 +10,28 @@ from .schemas import RFQ, flat_values
 from .scoring import score_bids
 
 
-def _read_and_extract(filename: str, data: bytes, rfq: RFQ, mode: str, api_key: str | None) -> dict:
-    """Pure step (no database access), safe to run in worker threads."""
+def _read(filename: str, data: bytes) -> dict:
+    """File bytes -> text and its hash. Pure step (no database access), safe to run in worker threads."""
     try:
         text = extract_text(filename, data)
     except Exception as e:  # corrupt or unsupported file
-        return {"filename": filename, "text": "", "quote": None, "meta": {"error": f"Could not read file: {e}"}}
-    quote, meta = extract(text, rfq, mode, api_key)
-    return {"filename": filename, "text": text, "quote": quote, "meta": meta}
+        return {"filename": filename, "text": "", "sha": None, "quote": None,
+                "meta": {"error": f"Could not read file: {e}"}}
+    return {"filename": filename, "text": text, "sha": text_sha(text) if text else None}
+
+
+def _extract(doc: dict, rfq: RFQ, mode: str, api_key: str | None) -> dict:
+    """Text -> quote. Pure step (no database access), safe to run in worker threads."""
+    if "meta" in doc:  # unreadable file: nothing to extract
+        return doc
+    quote, meta = extract(doc["text"], rfq, mode, api_key)
+    return {**doc, "quote": quote, "meta": meta}
 
 
 def _store(event_id: str, result: dict, actor: str) -> dict:
     text, quote, meta = result["text"], result["quote"], result["meta"]
     status = "extracted" if quote else "failed"
-    quote_id = db.add_quote(event_id, result["filename"], text_sha(text) if text else None, text, quote, [],
-                            status, actor)
+    quote_id = db.add_quote(event_id, result["filename"], result["sha"], text, quote, [], status, actor)
     if meta.get("source") in ("live", "demo_cache"):
         # Log each model call separately so the scorecard can show spend by model and escalation rate.
         for run in meta.get("runs") or [meta]:
@@ -34,18 +41,42 @@ def _store(event_id: str, result: dict, actor: str) -> dict:
             "model": meta.get("model"), "escalated": meta.get("escalated", False)}
 
 
+def _duplicate(filename: str, existing: str) -> dict:
+    return {"filename": filename, "quote_id": None, "status": "duplicate",
+            "error": f"Identical to {existing}, already in this event.", "source": None, "cost_usd": 0.0,
+            "model": None, "escalated": False}
+
+
 def process_document(event_id: str, rfq: RFQ, filename: str, data: bytes, mode: str,
                      api_key: str | None, actor: str) -> dict:
     """Ingest -> extract -> store. Returns a summary for the UI."""
-    return _store(event_id, _read_and_extract(filename, data, rfq, mode, api_key), actor)
+    return process_documents(event_id, rfq, [(filename, data)], mode, api_key, actor)[0]
 
 
 def process_documents(event_id: str, rfq: RFQ, files: list[tuple[str, bytes]], mode: str,
                       api_key: str | None, actor: str) -> list[dict]:
-    """Extract several documents in parallel (live calls are I/O-bound), then store them in order."""
-    with ThreadPoolExecutor(max_workers=max(1, min(len(files), 4))) as pool:
-        results = list(pool.map(lambda f: _read_and_extract(f[0], f[1], rfq, mode, api_key), files))
-    return [_store(event_id, r, actor) for r in results]
+    """Extract several documents in parallel (live calls are I/O-bound), then store them in order.
+
+    A document whose text is already in the event, or repeats within the batch, is skipped before any model
+    call and reported with status "duplicate". A quote whose extraction failed does not count as present,
+    so a failed document can be retried by uploading it again.
+    """
+    if not files:
+        return []
+    seen = {q["doc_sha"]: q["filename"] for q in db.list_quotes(event_id) if q["doc_sha"] and q["status"] != "failed"}
+    with ThreadPoolExecutor(max_workers=min(len(files), 4)) as pool:
+        docs = list(pool.map(lambda f: _read(*f), files))
+        fresh = []
+        for doc in docs:
+            if doc["sha"] in seen:  # unreadable files have no hash and are never treated as duplicates
+                doc["duplicate_of"] = seen[doc["sha"]]
+            else:
+                fresh.append(doc)
+                if doc["sha"]:
+                    seen[doc["sha"]] = doc["filename"]
+        extracted = iter(list(pool.map(lambda d: _extract(d, rfq, mode, api_key), fresh)))
+    return [_duplicate(doc["filename"], doc["duplicate_of"]) if "duplicate_of" in doc
+            else _store(event_id, next(extracted), actor) for doc in docs]
 
 
 def generate_test_quotes(event_id: str, rfq: RFQ, api_key: str, actor: str, privileged: bool,
@@ -64,6 +95,10 @@ def generate_test_quotes(event_id: str, rfq: RFQ, api_key: str, actor: str, priv
     scores, cost = [], sum(s.writer_meta.get("cost_usd", 0.0) for s in suppliers)
     for supplier, result in zip(written, results):
         db.log_llm_run(supplier.writer_meta, "generate", event_id, result["quote_id"])
+        if result["status"] == "duplicate":  # the writer repeated a document verbatim; there is no quote to grade
+            scores.append({"filename": supplier.filename, "style": supplier.style, "correct": 0, "total": 0,
+                           "misses": [], "omitted_by_writer": [], "status": "duplicate", "error": result["error"]})
+            continue
         db.save_answer_key(result["quote_id"], event_id, supplier.truth, supplier.omitted_fields, supplier.style)
         cost += result["cost_usd"]
         extracted = next((q["extraction"] for q in db.list_quotes(event_id) if q["id"] == result["quote_id"]), None)
