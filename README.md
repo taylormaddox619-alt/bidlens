@@ -19,7 +19,7 @@ Buyers compare supplier quotes that arrive as PDFs and spreadsheets in every for
 
 A step tracker at the top of every page shows where you are. The blue **Next** button always names the next action.
 
-1. **New Bid Event → Quick start.** Click **Load demo scenario**, or **🎲 Generate a fresh scenario** for suppliers nobody has seen. The quotes table lists the riskiest quotes first.
+1. **New Bid Event → Quick start.** Click **Load demo scenario**, or **Generate a fresh scenario** for suppliers nobody has seen. The quotes table lists the riskiest quotes first.
 2. **Review & Approve.** Quotes open highest-risk first. Read the 🔴 red and 🟠 amber boxes: each issue says what to do. Check the highlighted evidence in the document, fix any wrong value, then **Approve** or **Reject**. The next quote opens automatically, with a banner saying who's next and how many are left.
 3. **Comparison** unlocks once every quote has a decision. See why the lowest unit price loses on landed cost, check **red flags by supplier**, adjust scoring weights, and draft the memo.
 4. **Record the award.** Choosing anyone but the top-scored supplier requires a written justification.
@@ -48,7 +48,7 @@ RFQ for 500 cast-iron compressor air-end housings, with four fictional suppliers
 
 ## Not a staged demo: generate fresh scenarios
 
-**🎲 Generate a fresh scenario** creates a random RFQ with four suppliers nobody has seen:
+**Generate a fresh scenario** creates a random RFQ with four suppliers nobody has seen:
 
 1. **Code** randomly picks each supplier's country, currency, prices or price breaks, Incoterm, freight, lead time, payment terms, warranty and validity. Those terms are the **hidden answer key**.
 2. **Claude** writes each supplier's quote as a PDF or Excel sheet in varied styles (formal letter, terse form, email, bilingual). It must reproduce every term exactly; this is checked automatically with one retry.
@@ -137,7 +137,11 @@ Each live run appends one line per configuration to `evals/history.jsonl` (git S
 ## Project structure
 
 ```
-Home.py, pages/          Streamlit UI (New Bid Event, Review & Approve, Comparison, AI Scorecard, Governance)
+Home.py                  entrypoint: builds the sidebar navigation (sections, titles, icons) and runs a view
+views/                   the pages: Home, New Bid Event, Review & Approve, Comparison, AI Scorecard, Governance
+                         (not `pages/`: that folder name switches on Streamlit's legacy auto-navigation)
+.streamlit/config.toml   light and dark theme; follows the viewer's OS setting, switchable in Settings
+assets/                  logo (light and dark)
 reload_guard.py          reloads redeployed bidlens modules on Streamlit
 bidlens/
   schemas.py, ingest.py  quote schema; PDF/Excel/text ingestion
