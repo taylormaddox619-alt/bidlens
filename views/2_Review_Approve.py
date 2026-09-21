@@ -160,26 +160,30 @@ with left:
             "Value": review.display_value(value),
             "Confidence": field.get("confidence", ""),
             "Evidence": evidence,
-            "Source text": src or "",
         })
     df = pd.DataFrame(rows)
+    # No "Source text" column: the document panel on the right highlights every citation, and without it the
+    # grid fits its column instead of scrolling sideways. Row height is pinned so the height is exact (a header
+    # plus one row per field): no blank trailing row, no inner scrollbar.
+    GRID_ROW_PX = 35
     edited_df = st.data_editor(
         df, key=f"fields_{quote_id}", hide_index=True, width="stretch", disabled=locked,
-        height=36 * (len(rows) + 1) + 3,
+        row_height=GRID_ROW_PX, height=GRID_ROW_PX * (len(rows) + 1) + 2,
         column_config={
             "field": None,
             "Field": st.column_config.TextColumn(disabled=True, width=170),
-            "Value": st.column_config.TextColumn(help="Edit to correct the extraction", width=190),
+            "Value": st.column_config.TextColumn(help="Edit to correct the extraction", width="large"),
             "Confidence": st.column_config.TextColumn(disabled=True, width=85),
             "Evidence": st.column_config.TextColumn(disabled=True, width=130),
-            "Source text": st.column_config.TextColumn(disabled=True, width="large"),
         },
     )
     st.caption("🔴/🟠 next to a field = it has a flag in the boxes above · * = required · "
                "double-click a Value to edit it")
 
     st.markdown("**Price breaks**")
-    tiers_df = pd.DataFrame(reviewed.get("price_tiers") or [],
+    if not reviewed.get("price_tiers"):
+        st.caption("No quantity price breaks in this quote. Add rows if the document has them.")
+    tiers_df =pd.DataFrame(reviewed.get("price_tiers") or [],
                             columns=["min_qty", "max_qty", "unit_price", "source_quote"])
     edited_tiers = st.data_editor(
         tiers_df, key=f"tiers_{quote_id}", hide_index=True, width="stretch", num_rows="dynamic",
@@ -279,7 +283,8 @@ def highlighted(text: str, quotes_to_mark: list[str]) -> str:
 
 
 with right:
-    st.markdown(f"#### Source document · `{q['filename']}`")
+    st.markdown("#### Source document")
+    st.caption(q["filename"])
     cites = [(reviewed.get(n) or {}).get("source_quote") for n, *_ in FIELD_SPECS]
     cites += [t.get("source_quote") for t in reviewed.get("price_tiers") or []]
     body = highlighted(q["doc_text"], [c for c in cites if c])
