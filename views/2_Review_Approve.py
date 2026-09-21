@@ -242,7 +242,7 @@ with left:
         ack = True
         if highs:
             with st.container(border=True):
-                st.markdown(ui.md(f"**🔴 To approve, you must accept {len(highs)} high-risk issue"
+                st.markdown(ui.md(f"**{ui.SEVERITY_MD['high']} To approve, you must accept {len(highs)} high-risk issue"
                                   f"{'s' if len(highs) != 1 else ''}:**\n"
                                   + "\n".join(f"- {label(f['field'])}: {f['message']}" for f in highs)))
                 ack = st.checkbox("I have checked these high-risk issues and accept this quote for comparison, "
