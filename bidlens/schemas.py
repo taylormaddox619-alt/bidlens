@@ -58,7 +58,8 @@ class Quote(BaseModel):
     payment_terms: TextField = Field(description="Payment terms as written")
     payment_terms_days: NumberField = Field(description="Days until payment is due, e.g. 60")
     prepayment_percent: NumberField = Field(
-        description="Percent of order value due before shipment, 0 if none stated"
+        description="Percent of order value due before shipment (deposit, advance, or cash in advance); "
+                    "null when the document states none"
     )
     warranty_months: NumberField
     moq: NumberField = Field(description="Minimum order quantity")

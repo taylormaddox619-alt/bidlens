@@ -172,7 +172,26 @@ def quote_supplier(quote: dict) -> str:
     return display_name(name) if name else quote["filename"]
 
 
-# --- Risk display (pure helpers, unit-tested) ----------------------------------------------------
+def comparison_labels(rows: list[dict]) -> dict[str, str]:
+    """{quote_id: label} that is unique per comparison row.
+
+    The supplier name alone when no other row shares it. Two quotes from one supplier are legitimate (a
+    revised quote), so those get the filename appended, and the quote id as well if that still collides.
+    Charts, tables and the award picker key on this label; keyed on the bare name, duplicate suppliers
+    had their bars summed and the award recorded against whichever quote came first.
+    """
+    def distinct(labels: dict, suffix) -> dict:
+        counts = {}
+        for text in labels.values():
+            counts[text] = counts.get(text, 0) + 1
+        return {qid: text if counts[text] == 1 else f"{text} ({suffix(qid)})" for qid, text in labels.items()}
+
+    by_id = {r["quote_id"]: r for r in rows}
+    labels = distinct({qid: r["supplier"] for qid, r in by_id.items()}, lambda qid: by_id[qid]["filename"])
+    return distinct(labels, lambda qid: qid)
+
+
+# --- Risk display (pure helpers, unit-tested)----------------------------------------------------
 def flag_counts(flags: list[dict]) -> dict:
     return {level: sum(f["severity"] == level for f in flags) for level in SEVERITY}
 

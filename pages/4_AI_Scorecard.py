@@ -9,6 +9,7 @@ from reload_guard import ensure_fresh
 ensure_fresh()  # load current bidlens code after a redeploy (see reload_guard.py)
 
 from bidlens import config, db, ui
+from bidlens.schemas import FIELD_SPECS
 
 ui.setup_page("AI Scorecard", "📊")
 ui.sidebar()
@@ -29,14 +30,16 @@ approved = [q for q in quotes if q["status"] == "approved"]
 extract_runs = [r for r in runs if r["purpose"] == "extract"]
 live_runs = [r for r in runs if r["source"] == "live"]
 
-fields_per_quote = 17
+fields_per_quote = len(FIELD_SPECS)
 total_fields = len(extracted) * fields_per_quote
 edited_quotes = {e["quote_id"] for e in edits}
 edit_rate = len([e for e in edits if e["field"] not in ("price_tiers", "supplier_exceptions")]) / total_fields if total_fields else 0
 flagged_high = sum(any(f["severity"] == "high" for f in json.loads(q["flags_json"] or "[]")) for q in quotes)
 hours_saved = len(reviewed) * (config.MANUAL_MINUTES_PER_QUOTE - config.ASSISTED_MINUTES_PER_QUOTE) / 60
 cost_avoided = sum(a["savings_vs_naive_usd"] or 0 for a in awards)
-live_cost = sum(r["cost_usd"] or 0 for r in live_runs)
+live_cost = sum(r["cost_usd"] or 0 for r in live_runs)  # everything: extraction, escalation, memos, test-quote writing
+live_extract_runs = [r for r in live_runs if r["purpose"] in ("extract", "extract_escalation")]
+extract_cost = sum(r["cost_usd"] or 0 for r in live_extract_runs)
 
 st.markdown("#### Adoption")
 a1, a2, a3, a4 = st.columns(4)
@@ -107,9 +110,10 @@ b1.metric("Buyer hours saved (est.)", f"{hours_saved:.1f}",
 b2.metric("Cost avoided vs. lowest unit price", ui.money(cost_avoided),
           help="Landed cost of the lowest-unit-price bid minus landed cost of the awarded bid")
 b3.metric("Live API spend", f"${live_cost:.2f}")
-live_quotes = {r["quote_id"] for r in live_runs if r["purpose"] in ("extract", "extract_escalation")}
-b4.metric("API cost per quote", f"${live_cost / len(live_quotes):.3f}" if live_quotes else "n/a (demo)",
-          help="All model calls for a quote, including escalations, divided by quotes processed live")
+live_quotes = {r["quote_id"] for r in live_extract_runs}
+b4.metric("API cost per quote", f"${extract_cost / len(live_quotes):.3f}" if live_quotes else "n/a (demo)",
+          help="Extraction calls for a quote, including escalations, divided by quotes processed live. Memo drafts "
+               "and AI-generated test quotes count toward Live API spend but not here.")
 
 followed = [a for a in awards if a["followed_recommendation"]]
 if awards:

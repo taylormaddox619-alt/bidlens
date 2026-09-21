@@ -75,6 +75,11 @@ def apply_edits(reviewed: dict, field_rows: list[dict], tier_rows: list[dict],
 
 
 def display_value(value) -> str:
+    """Grid text for a value. Lossless: the grid is parsed back on every render (`apply_edits`), so any
+    rounding here would register as a buyer edit and overwrite the extracted value on save."""
     if value is None:
         return ""
-    return f"{value:g}" if isinstance(value, float) else str(value)
+    if isinstance(value, float):
+        # Whole numbers without ".0"; otherwise repr, the shortest text that parses back to the same float.
+        return str(int(value)) if value.is_integer() else repr(value)
+    return str(value)

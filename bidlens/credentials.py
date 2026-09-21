@@ -1,8 +1,7 @@
 """Read secrets outside Streamlit (scripts, evals): environment first, then .streamlit/secrets.toml."""
 
 import os
-
-import toml
+import tomllib
 
 from .config import ROOT
 
@@ -13,6 +12,7 @@ def get_secret(name: str) -> str | None:
     if os.environ.get(name):
         return os.environ[name]
     if SECRETS_FILE.exists():
-        value = toml.load(SECRETS_FILE).get(name)
+        with SECRETS_FILE.open("rb") as f:
+            value = tomllib.load(f).get(name)
         return str(value) if value else None
     return None

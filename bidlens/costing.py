@@ -38,19 +38,37 @@ def applicable_unit_price(values: dict, quantity: int) -> float | None:
     return float(price) if price is not None else None
 
 
+def uncostable(values: dict, quantity: int) -> str | None:
+    """Buyer-readable reason a landed cost cannot be computed for these values, or None when it can.
+
+    The review page blocks approval on it and the comparison excludes on it, so an approved quote can always
+    be costed and scored.
+    """
+    currency = str(values.get("currency") or "").strip().upper()
+    if not currency:
+        return "currency not stated"
+    if currency not in fx_table():
+        return f"no FX rate on file for {currency}"
+    price = applicable_unit_price(values, quantity)
+    if price is None:
+        return "unit price not stated"
+    if price <= 0:
+        return "unit price must be greater than zero"  # a zero landed cost would divide by zero in scoring
+    return None
+
+
 def landed_cost(values: dict, rfq: RFQ) -> LandedCost:
+    reason = uncostable(values, rfq.quantity)
+    if reason:
+        raise ValueError(reason)
     notes: list[str] = []
     qty = rfq.quantity
-    currency = (values.get("currency") or rfq.currency).upper()
-    fx = fx_table().get(currency)
-    if fx is None:
-        raise ValueError(f"No FX rate for {currency}")
+    currency = values["currency"].strip().upper()
+    fx = fx_table()[currency]
     if currency != rfq.currency:
         notes.append(f"Converted {currency}->USD at {fx}")
 
     unit_quoted = applicable_unit_price(values, qty)
-    if unit_quoted is None:
-        raise ValueError("Unit price is required to compute landed cost")
     unit_usd = unit_quoted * fx
     goods = unit_usd * qty
     tooling = float(values.get("tooling_cost") or 0) * fx

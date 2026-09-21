@@ -234,7 +234,8 @@ def write_document(client: anthropic.Anthropic, supplier: TestSupplier) -> None:
                f"Facts (copy value strings exactly):\n{json.dumps(supplier.facts, indent=2, ensure_ascii=False)}")
     missing = list(supplier.required_strings)
     for attempt in (1, 2):
-        response = client.messages.parse(
+        # The beta endpoint, like extract.py: only it accepts the `betas`/`fallbacks` that fallback_kwargs adds.
+        response = client.beta.messages.parse(
             model=model, max_tokens=8000, system=load_prompt(config.GENERATE_PROMPT_VERSION),
             messages=[{"role": "user", "content": message}], output_format=GeneratedDocument,
             output_config={"effort": "low"}, **fallback_kwargs(model),

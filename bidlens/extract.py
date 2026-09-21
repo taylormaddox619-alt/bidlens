@@ -17,7 +17,8 @@ from pydantic import ValidationError
 
 from . import config
 from .ingest import quote_in_document, text_sha
-from .normalize import is_iso_date, normalize_quote
+from .normalize import INCOTERMS, is_iso_date, normalize_quote
+from .reference import fx_table
 from .schemas import FIELD_SPECS, RFQ, Quote
 
 REQUIRED_FIELDS = {name for name, _, _, required in FIELD_SPECS if required}
@@ -110,6 +111,9 @@ def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
         except anthropic.APIConnectionError:
             last_error, error_kind = "Could not reach the Anthropic API.", "infra"
             break
+        except anthropic.APIError as e:  # the rest of the SDK's errors, e.g. APIResponseValidationError
+            last_error, error_kind = f"API error: {e}", "infra"
+            break
         except ValidationError as e:
             last_error = f"Output failed schema validation (attempt {attempt}): {e.error_count()} errors"
             continue
@@ -162,13 +166,20 @@ def escalation_reasons(quote: dict | None, meta: dict, text: str) -> list[str]:
             reasons.append(f"price tier from {tier.get('min_qty')}: citation not found in document")
     if not (quote.get("unit_price") or {}).get("value") and not quote.get("price_tiers"):
         reasons.append("no price extracted")
-    # Values the rules can't interpret even after normalization would silently disable checks.
+    # Values the rules can't interpret even after normalization would silently disable checks, and a currency
+    # without an FX rate (or an Incoterm that is not a code) cannot be costed at all.
     valid_until = (quote.get("valid_until") or {}).get("value")
     if valid_until and not is_iso_date(valid_until):
         reasons.append(f"valid_until: unreadable date '{valid_until}'")
     origin = (quote.get("country_of_origin") or {}).get("value")
     if origin and not re.fullmatch(r"[A-Z]{2}", str(origin)):
         reasons.append(f"country_of_origin: not a country code '{origin}'")
+    cur = (quote.get("currency") or {}).get("value")
+    if cur and (not re.fullmatch(r"[A-Z]{3}", str(cur)) or cur not in fx_table()):
+        reasons.append(f"currency: unrecognized '{cur}'")
+    incoterm = (quote.get("incoterm") or {}).get("value")
+    if incoterm and incoterm not in INCOTERMS:
+        reasons.append(f"incoterm: not an Incoterms code '{incoterm}'")
     return reasons
 
 
