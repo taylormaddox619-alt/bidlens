@@ -1,6 +1,10 @@
 import copy
+import random
+from datetime import date
 
-from bidlens import rules
+import pytest
+
+from bidlens import generate, rules
 from bidlens.review import apply_edits, display_value
 from bidlens.schemas import FIELD_SPECS
 
@@ -63,3 +67,30 @@ def test_added_tier_is_marked_buyer_entered(samples):
                                 "\n".join(quote["supplier_exceptions"]))
     assert new["price_tiers"][0]["edited"] is True
     assert edits[0][0] == "price_tiers"
+
+
+@pytest.mark.parametrize("value", [172.0, 0.1, 125000.75, 1234567.0, 17416.67, 356666.67, 85181.82, 27983.45,
+                                   8.571428, 0.001, 2.5e9])
+def test_display_value_round_trips(value):
+    """The grid text is parsed back on every render; any rounding here shows up as an edit nobody made."""
+    assert float(display_value(value)) == value
+
+
+def test_display_value_formats():
+    assert display_value(172.0) == "172"
+    assert display_value(1234567.0) == "1234567"
+    assert display_value(125000.75) == "125000.75"
+    assert display_value(None) == ""
+    assert display_value("EUR") == "EUR"
+
+
+def test_generated_answer_keys_produce_no_phantom_edits():
+    """Generated MXN and INR quotes have 7+ significant digits; '%g' formatting rounded 30 of these 200."""
+    rfq = generate.random_rfq(random.Random(7), date(2026, 9, 15))
+    rng, used, phantom = random.Random(1), set(), []
+    for i in range(200):
+        truth = generate.random_supplier(rng, rfq, i, used).truth
+        _, edits, errors = untouched(truth)
+        if edits or errors:
+            phantom.append((i, edits, errors))
+    assert phantom == []

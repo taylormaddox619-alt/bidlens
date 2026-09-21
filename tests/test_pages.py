@@ -93,6 +93,19 @@ def test_review_page_still_approves_a_normal_quote(event_id, samples, rfq):
     assert not any(c.value.startswith("Approval blocked") for c in at.caption)
 
 
+# --- Item 2: an untouched grid is not an edit ------------------------------------------------------
+def test_review_page_shows_no_phantom_edits_for_long_numbers(event_id, samples, rfq):
+    quote = copy.deepcopy(samples["sierra"]["quote"])
+    quote["tooling_cost"]["value"] = 125000.75  # 8 significant digits; '%g' showed 125001
+    quote_id = add_quote(event_id, samples["sierra"], rfq, quote)
+    at = run_page("pages/2_Review_Approve.py", event_id, review_quote=quote_id)
+    assert not at.exception, at.exception
+    assert not any("unsaved edits" in w.value for w in at.warning)
+    if at.checkbox:
+        at.checkbox(key=f"ack_{quote_id}").check().run()
+    assert not button(at, "Approve quote").disabled
+
+
 # --- Smoke: every page renders in every workflow state ----------------------------------------------
 def load_demo_event(event_id, rfq) -> None:
     files = [(p.name, p.read_bytes()) for p in sorted(SAMPLES_DIR.iterdir()) if p.suffix in (".pdf", ".xlsx")]
