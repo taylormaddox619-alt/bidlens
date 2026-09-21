@@ -1,6 +1,7 @@
 """Model routing: cheap first pass, escalate only on quality failures. No API calls."""
 
 import copy
+from types import SimpleNamespace
 
 import pytest
 
@@ -126,3 +127,19 @@ def test_failed_escalation_keeps_first_pass(samples, rfq, fake_models):
 def test_fallbacks_only_sent_to_supported_models():
     assert extract.fallback_kwargs("claude-opus-5")["fallbacks"] == "default"
     assert extract.fallback_kwargs("claude-sonnet-5") == {}
+
+
+def test_unexpected_sdk_error_is_a_failed_run_not_an_exception(monkeypatch, samples, rfq):
+    """Errors outside the four specific handlers (e.g. APIResponseValidationError) derive from APIError."""
+    class Messages:
+        def parse(self, **kwargs):
+            raise extract.anthropic.APIError("malformed response", request=None, body=None)
+
+    class Client:
+        def __init__(self, api_key=None):
+            self.beta = SimpleNamespace(messages=Messages())
+
+    monkeypatch.setattr(extract.anthropic, "Anthropic", Client)
+    quote, meta = extract.live_extraction(samples["jadeport"]["text"], rfq, "key", "claude-sonnet-5")
+    assert quote is None and meta["status"] == "failed" and meta["error_kind"] == "infra"
+    assert meta["error"] == "API error: malformed response"

@@ -1,5 +1,6 @@
 """Workflow orchestration shared by the UI, scripts, and evals."""
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from . import config, costing, db, rules
@@ -8,6 +9,8 @@ from .grading import compare_fields
 from .ingest import extract_text, text_sha
 from .schemas import RFQ, flat_values
 from .scoring import score_bids
+
+log = logging.getLogger(__name__)
 
 
 def _read(filename: str, data: bytes) -> dict:
@@ -24,7 +27,13 @@ def _extract(doc: dict, rfq: RFQ, mode: str, api_key: str | None) -> dict:
     """Text -> quote. Pure step (no database access), safe to run in worker threads."""
     if "meta" in doc:  # unreadable file: nothing to extract
         return doc
-    quote, meta = extract(doc["text"], rfq, mode, api_key)
+    try:
+        quote, meta = extract(doc["text"], rfq, mode, api_key)
+    except Exception as e:
+        # Anything the extractor did not handle itself. Store this document as failed (the buyer can enter it
+        # manually) instead of re-raising from the pool, which would discard the rest of the batch.
+        log.exception("Extraction crashed for %s", doc["filename"])
+        quote, meta = None, {"source": mode, "status": "failed", "error": f"Extraction error: {e}"}
     return {**doc, "quote": quote, "meta": meta}
 
 

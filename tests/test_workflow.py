@@ -141,3 +141,23 @@ def test_a_failed_document_can_be_retried(event_id, rfq, monkeypatch):
         assert workflow.process_document(event_id, rfq, name, data, "live", "key", "t")["status"] == "failed"
     assert workflow.process_document(event_id, rfq, name, data, "demo", None, "t")["status"] == "extracted"
     assert sorted(q["status"] for q in db.list_quotes(event_id)) == ["extracted", "failed"]
+
+
+# --- Item 4: one failing document must not lose the batch ---------------------------------------------
+def test_an_extraction_crash_fails_one_document_not_the_batch(event_id, rfq, monkeypatch):
+    real = workflow.extract
+    files = sample_files()[:2]
+    broken_text = workflow.extract_text(*files[0])
+
+    def flaky(text, rfq, mode, api_key=None):
+        if text == broken_text:
+            raise RuntimeError("boom")
+        return real(text, rfq, mode, api_key)
+
+    monkeypatch.setattr(workflow, "extract", flaky)
+    results = workflow.process_documents(event_id, rfq, files, "demo", None, "tester")
+    assert [r["status"] for r in results] == ["failed", "extracted"]
+    assert results[0]["error"] == "Extraction error: boom"
+    stored = {q["filename"]: q for q in db.list_quotes(event_id)}
+    assert stored[files[0][0]]["status"] == "failed" and stored[files[0][0]]["doc_text"] == broken_text
+    assert stored[files[1][0]]["status"] == "extracted"

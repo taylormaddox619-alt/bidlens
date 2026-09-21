@@ -111,6 +111,9 @@ def live_extraction(text: str, rfq: RFQ, api_key: str, model: str,
         except anthropic.APIConnectionError:
             last_error, error_kind = "Could not reach the Anthropic API.", "infra"
             break
+        except anthropic.APIError as e:  # the rest of the SDK's errors, e.g. APIResponseValidationError
+            last_error, error_kind = f"API error: {e}", "infra"
+            break
         except ValidationError as e:
             last_error = f"Output failed schema validation (attempt {attempt}): {e.error_count()} errors"
             continue
