@@ -5,6 +5,8 @@ All SQL lives here so the store can be swapped for Snowflake (same ANSI SQL,
 """
 
 import json
+import logging
+import os
 import threading
 import uuid
 from datetime import date, datetime, timezone
@@ -12,6 +14,8 @@ from datetime import date, datetime, timezone
 import duckdb
 
 from .config import DB_PATH
+
+log = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 _conn: duckdb.DuckDBPyConnection | None = None
@@ -71,12 +75,31 @@ def _new_id() -> str:
     return uuid.uuid4().hex[:12]
 
 
+def _connect() -> duckdb.DuckDBPyConnection:
+    """Open the database. If the default demo file cannot be opened, start this process on a file of its own.
+
+    DuckDB allows one process per file. On Streamlit Cloud a deploy can restart the server while the previous
+    server process is still alive and holding the lock, and then every page fails until someone reboots the
+    app. The default database is ephemeral demo state, so a fresh file is the right recovery. A database named
+    with BIDLENS_DB was chosen deliberately: opening a different, empty one would look like data loss, so that
+    error is raised.
+    """
+    try:
+        return duckdb.connect(str(DB_PATH))
+    except duckdb.IOException as e:
+        if os.environ.get("BIDLENS_DB"):
+            raise
+        fallback = DB_PATH.with_name(f"{DB_PATH.stem}-{os.getpid()}{DB_PATH.suffix}")
+        log.warning("Could not open %s (%s). Using %s for this process.", DB_PATH, e, fallback.name)
+        return duckdb.connect(str(fallback))
+
+
 def cursor() -> duckdb.DuckDBPyConnection:
     global _conn
     with _lock:
         if _conn is None:
             DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-            _conn = duckdb.connect(str(DB_PATH))
+            _conn = _connect()
             _conn.execute(SCHEMA)
             _migrate(_conn)
         return _conn.cursor()
